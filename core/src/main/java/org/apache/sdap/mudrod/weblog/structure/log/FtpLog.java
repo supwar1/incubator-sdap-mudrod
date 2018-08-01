@@ -31,12 +31,12 @@ import java.util.Properties;
 public class FtpLog extends WebLog implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ImportLogFile.class);
-  
+
   public FtpLog() {
-	  super();
+    super();
   }
 
-  public static String parseFromLogLine(String log, Properties props) {
+  public static FtpLog parseFromLogLine(String log, Properties props) {
 
     try {
       String ip = log.split(" +")[6];
@@ -44,6 +44,7 @@ public class FtpLog extends WebLog implements Serializable {
       String time = log.split(" +")[1] + ":" + log.split(" +")[2] + ":" + log.split(" +")[3] + ":" + log.split(" +")[4];
 
       time = SwithtoNum(time);
+      //System.out.println(time);
       SimpleDateFormat formatter = new SimpleDateFormat("MM:dd:HH:mm:ss:yyyy");
       Date date = formatter.parse(time);
 
@@ -53,19 +54,29 @@ public class FtpLog extends WebLog implements Serializable {
 
       if (!request.contains("/misc/") && !request.contains("readme")) {
         FtpLog ftplog = new FtpLog();
-        ftplog.LogType = MudrodConstants.FTP_LOG;
+        ftplog.logType = MudrodConstants.FTP_LOG;
         ftplog.IP = ip;
-        ftplog.Request = request;
-        ftplog.Bytes = Double.parseDouble(bytes);
+        ftplog.request = request;
+        ftplog.bytes = Double.parseDouble(bytes);
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-        ftplog.Time = df.format(date);
+        ftplog.time = df.format(date);
 
-        return new Gson().toJson(ftplog);
+        return ftplog;
       }
     } catch (Exception e) {
       LOG.warn("Error parsing ftp log line [{}]. Skipping this line.", log, e);
     }
-    return "{}";
+    return null;
+  }
+
+  public static String parseFromLogLineToJson(String log, Properties props) {
+
+    FtpLog ftplog = FtpLog.parseFromLogLine(log, props);
+    if (ftplog == null) {
+      return "{}";
+    }
+
+    return new Gson().toJson(ftplog);
   }
 }

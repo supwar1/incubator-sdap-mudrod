@@ -14,20 +14,21 @@
 package org.apache.sdap.mudrod.weblog.structure.log;
 
 import java.io.Serializable;
+import java.util.Properties;
 
 /**
  * This class represents an Apache access log line. See
  * http://httpd.apache.org/docs/2.2/logs.html for more details.
  */
 public class WebLog implements Serializable {
-  String LogType;
+  String logType;
   String IP;
-  String Time;
-  String Request;
-  double Bytes;
+  String time;
+  String request;
+  double bytes;
 
   public String getLogType() {
-    return this.LogType;
+    return this.logType;
   }
 
   public String getIP() {
@@ -35,15 +36,15 @@ public class WebLog implements Serializable {
   }
 
   public String getTime() {
-    return this.Time;
+    return this.time;
   }
 
   public String getRequest() {
-    return this.Request;
+    return this.request;
   }
 
   public double getBytes() {
-    return this.Bytes;
+    return this.bytes;
   }
 
   public WebLog() {
@@ -85,5 +86,4 @@ public class WebLog implements Serializable {
     }
     return true;
   }
-
 }

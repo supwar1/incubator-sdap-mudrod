@@ -428,6 +428,9 @@ public class MudrodEngine {
    */
   public void setSparkDriver(SparkDriver sparkDriver) {
     this.spark = sparkDriver;
-
+  }
+  
+  public void setProperty(String name, String value){
+    this.props.put(name, value);
   }
 }

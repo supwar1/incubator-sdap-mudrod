@@ -65,7 +65,13 @@ public interface MudrodConstants {
   public static final String BLACK_LIST_REQUEST = "mudrod.black.request.list";
 
   public static final String BLACK_LIST_AGENT = "mudrod.black.agent.list";
-
+  
+  public static final String WHILE_LIST_REQUEST = "mudrod.white.request.list";
+  
+  public static final String REQUEST_LIST_STRATEGY =  "mudrod.request.list.strategy";
+  
+  public static final String WHITE = "white";
+  
   public static final String LOG_INDEX = "mudrod.log.index";
 
   public static final String METADATA_LINKAGE_TYPE = "metadata.linkage";

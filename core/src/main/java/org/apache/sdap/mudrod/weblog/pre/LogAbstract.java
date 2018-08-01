@@ -51,6 +51,10 @@ public class LogAbstract extends DiscoveryStepAbstract {
       initLogIndex();
     }
   }
+  
+  public String getLogIndex(){
+    return this.logIndex;
+  }
 
   protected void initLogIndex() {
     logIndex = props.getProperty(MudrodConstants.LOG_INDEX) 

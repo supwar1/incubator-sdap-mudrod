@@ -32,48 +32,53 @@ import java.util.regex.Pattern;
  * http://httpd.apache.org/docs/2.2/logs.html for more details.
  */
 public class ApacheAccessLog extends WebLog implements Serializable {
-  String Response;
-  String Referer;
-  String Browser;
+  String response;
+  String referer;
+  String agent;
 
   @Override
   public double getBytes() {
-    return this.Bytes;
+    return this.bytes;
   }
 
-  public String getBrowser() {
-    return this.Browser;
+  public String getAgent() {
+    return this.agent;
   }
 
   public String getResponse() {
-    return this.Response;
+    return this.response;
   }
 
   public String getReferer() {
-    return this.Referer;
+    return this.referer;
   }
 
   public ApacheAccessLog() {
-	  super();
+    super();
   }
 
-  public static String parseFromLogLine(String log, Properties props) throws IOException, ParseException {
+  public static ApacheAccessLog parseFromLogLine(String log, Properties props) {
 
     String logEntryPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\d+|-) \"((?:[^\"]|\")+)\" \"([^\"]+)\"";
     final int numFields = 9;
     Pattern p = Pattern.compile(logEntryPattern);
     Matcher matcher;
 
-    String lineJson = "{}";
     matcher = p.matcher(log);
     if (!matcher.matches() || numFields != matcher.groupCount()) {
-      return lineJson;
+      return null;
     }
 
     String time = matcher.group(4);
     time = SwithtoNum(time);
     SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy:HH:mm:ss");
-    Date date = formatter.parse(time);
+    Date date = null;
+    try {
+      date = formatter.parse(time);
+    } catch (ParseException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
     String bytes = matcher.group(7);
 
@@ -85,32 +90,55 @@ public class ApacheAccessLog extends WebLog implements Serializable {
     String agent = matcher.group(9);
     CrawlerDetection crawlerDe = new CrawlerDetection(props);
     if (crawlerDe.checkKnownCrawler(agent)) {
-      return lineJson;
+      return null;
     } else {
 
-      String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
-      for (String mimeType : mimeTypes) {
-        if (request.contains(mimeType)) {
-          return lineJson;
+      if (props.getProperty(MudrodConstants.REQUEST_LIST_STRATEGY).equals(MudrodConstants.WHITE)) {
+        String[] searchPageTypes = props.getProperty(MudrodConstants.WHILE_LIST_REQUEST).split(",");
+        boolean bContain = false;
+        for (String searchType : searchPageTypes) {
+          if (request.contains(searchType)) {
+            bContain = true;
+            break;
+          }
+        }
+        if (!bContain) {
+          return null;
+        }
+      } else {
+        String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
+        for (String mimeType : mimeTypes) {
+          if (request.contains(mimeType)) {
+            return null;
+          }
         }
       }
 
       ApacheAccessLog accesslog = new ApacheAccessLog();
-      accesslog.LogType = MudrodConstants.HTTP_LOG;
+      accesslog.logType = MudrodConstants.HTTP_LOG;
       accesslog.IP = matcher.group(1);
-      accesslog.Request = matcher.group(5);
-      accesslog.Response = matcher.group(6);
-      accesslog.Bytes = Double.parseDouble(bytes);
-      accesslog.Referer = matcher.group(8);
-      accesslog.Browser = matcher.group(9);
+      accesslog.request = matcher.group(5);
+      accesslog.response = matcher.group(6);
+      accesslog.bytes = Double.parseDouble(bytes);
+      accesslog.referer = matcher.group(8);
+      accesslog.agent = matcher.group(9);
       SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-      accesslog.Time = df.format(date);
+      accesslog.time = df.format(date);
 
-      Gson gson = new Gson();
-      lineJson = gson.toJson(accesslog);
-
-      return lineJson;
+      return accesslog;
+    }
   }
+
+  public static String parseFromLogLineToJson(String log, Properties props) throws IOException, ParseException {
+
+    ApacheAccessLog accesslog = ApacheAccessLog.parseFromLogLine(log, props);
+    if (accesslog == null) {
+      return "{}";
+    }
+    Gson gson = new Gson();
+    String lineJson = gson.toJson(accesslog);
+
+    return lineJson;
   }
 
   public static boolean checknull(WebLog s) {
@@ -120,4 +148,15 @@ public class ApacheAccessLog extends WebLog implements Serializable {
     return true;
   }
 
+  public String parseUrl(String request, String baseUrl) {
+    Pattern pattern = Pattern.compile("get (.*?) http/*");
+    Matcher matcher;
+    matcher = pattern.matcher(request.trim().toLowerCase());
+    while (matcher.find()) {
+      request = matcher.group(1);
+      return baseUrl + request;
+    }
+
+    return request;
+  }
 }
