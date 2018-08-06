@@ -196,4 +196,28 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
   public void output() {
     // not implemented yet!
   }
+  
+  public String logIngestAndParse(String logDir){
+
+    ArrayList<String> inputList = (ArrayList<String>) getFileList(props.getProperty(MudrodConstants.DATA_DIR));
+    List<String> indexList = new ArrayList<>();
+    for (String anInputList : inputList) {
+      timeSuffix = anInputList;
+      props.put("TimeSuffix", timeSuffix);
+      DiscoveryStepAbstract im = new ImportLogFile(this.props, this.es, this.spark);
+      im.execute();
+      
+      String index = ((ImportLogFile)im).getLogIndex();
+      
+      DiscoveryStepAbstract cd = new CrawlerDetection(this.props, this.es, this.spark);
+      cd.execute();
+
+      DiscoveryStepAbstract sg = new SessionGenerator(this.props, this.es, this.spark);
+      sg.execute();
+
+      indexList.add(index);
+    }
+    
+    return String.join(",", indexList);
+  }
 }

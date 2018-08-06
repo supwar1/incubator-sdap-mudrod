@@ -63,6 +63,13 @@ searchServices.factory('SearchOptions', function(){
 	    	searchOptions = value;
 	    }
 	};
+	
+searchServices.factory('OfflineLogIngestion', ['$resource',
+    function($resource) {
+        return $resource("services/offline/ingest/", {}, {
+            get: {method: 'GET', cache: false, isArray: false}
+        });
+    }]);
 });
 
 searchServices.factory('PagerService',
