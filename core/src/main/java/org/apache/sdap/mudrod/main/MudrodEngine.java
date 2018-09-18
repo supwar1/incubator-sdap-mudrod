@@ -126,7 +126,6 @@ public class MudrodEngine {
   }
 
   private InputStream locateConfig() {
-
     String configLocation = System.getenv(MudrodConstants.MUDROD_CONFIG) == null ? "" : System.getenv(MudrodConstants.MUDROD_CONFIG);
     File configFile = new File(configLocation);
 
@@ -159,8 +158,8 @@ public class MudrodEngine {
       for(String key : props.stringPropertyNames()) {
         props.put(key, props.getProperty(key).trim());
       }
-      String rankingModelPath = props.getProperty(MudrodConstants.RANKING_MODEL);
-      props.put(MudrodConstants.RANKING_MODEL, decompressSVMWithSGDModel(rankingModelPath));
+      //String rankingModelPath = props.getProperty(MudrodConstants.RANKING_MODEL);
+      //props.put(MudrodConstants.RANKING_MODEL, decompressSVMWithSGDModel(rankingModelPath));
     } catch (IOException e) {
       LOG.info("Fail to load the sytem config file");
     }
