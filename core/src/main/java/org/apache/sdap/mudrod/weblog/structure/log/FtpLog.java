@@ -54,13 +54,15 @@ public class FtpLog extends WebLog implements Serializable {
 
       if (!request.contains("/misc/") && !request.contains("readme")) {
         FtpLog ftplog = new FtpLog();
-        ftplog.logType = MudrodConstants.FTP_LOG;
+        ftplog.LogType = MudrodConstants.FTP_LOG;
         ftplog.IP = ip;
-        ftplog.request = request;
-        ftplog.bytes = Double.parseDouble(bytes);
+        ftplog.Request = request;
+        ftplog.Bytes = Double.parseDouble(bytes);
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-        ftplog.time = df.format(date);
+        ftplog.Time = df.format(date);
+        
+        ftplog.log = log; //for test
 
         return ftplog;
       }

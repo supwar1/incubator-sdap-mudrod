@@ -8,6 +8,7 @@ import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.main.MudrodEngine;
 import org.apache.sdap.mudrod.weblog.structure.log.WebLog;
 import org.apache.sdap.mudrod.weblog.structure.log.WebLogFactory;
+import org.apache.sdap.mudrod.weblog.structure.session.SessionTree;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.Optional;
@@ -38,7 +39,8 @@ import org.joda.time.Seconds;
 public class LogMonitor {
   private static Properties props;
   private static final Duration SLIDE_INTERVAL = new Duration(3 * 1000);
-  private static final int interval_timeout = 30;
+  private static final int interval_timeout = 300;
+  private static final int session_maxinum_timeout = 600;
 
   private static final Function2<Long, Long, Long> SUM_REDUCER = (a, b) -> a + b;
   private static final Function2<DynamicSession, DynamicSession, DynamicSession> Session_Merger = (s1, s2) -> DynamicSession.add(s1, s2);
@@ -47,45 +49,25 @@ public class LogMonitor {
     DateTime now = DateTime.now().toLocalDateTime().toDateTime();
     if (s != null) {
       int interval = Seconds.secondsBetween(s.getEndTimeObj(), now).getSeconds();
-      if (interval > interval_timeout) {
+      int session_length = Seconds.secondsBetween(now, s.getStartTimeObj()).getSeconds();
+      if (interval > interval_timeout || session_length > session_maxinum_timeout) {
           s = null;
+          //System.out.println("h1");
       }
     } 
     
     for (DynamicSession i : news) {
       s = DynamicSession.add(s, i);
+      //System.out.println("h2");
     }
 
     if (s == null || !s.hasHttpLog()) {
+      //System.out.println("h3");
       return Optional.absent();
     } else {
+      //System.out.println("h4");
       return Optional.of(s);
     }
-  };
-
-  private static final Function2<List<DynamicSession>, Optional<DynamicSession>, Optional<DynamicSession>> COMPUTE_RUNNING_SESSION_BAK = (news, current) -> {
-    DynamicSession s = current.orNull();
-    DateTime now = DateTime.now().toLocalDateTime().toDateTime(); // change the
-                                                                  // value of
-                                                                  // now to test
-    if (s != null) {
-      int interval = Seconds.secondsBetween(s.getEndTimeObj(), now).getSeconds();
-      if (interval > interval_timeout) {
-        if (news.size() > 0) {
-          for (DynamicSession i : news) {
-            s = DynamicSession.add(null, i);
-          }
-          return Optional.of(s);
-        } else {
-          return Optional.absent();
-        }
-      }
-    }
-
-    for (DynamicSession i : news) {
-      s = DynamicSession.add(s, i);
-    }
-    return Optional.of(s);
   };
 
   public void monitorLog(SparkDriver spark, Properties props, String directory) {
@@ -102,6 +84,7 @@ public class LogMonitor {
         .updateStateByKey(COMPUTE_RUNNING_SESSION);
 
     ipDStream.foreachRDD(rdd -> {
+      //System.out.println("h5");
       List<Tuple2<String, DynamicSession>> sessions = rdd.take(100);
       for (Tuple2<String, DynamicSession> t : sessions) {
         List<WebLog> logs = t._2.getLogList();
@@ -116,8 +99,27 @@ public class LogMonitor {
         }
         System.out.println(t._1 + " " + httpCount + " http, " + ftpCount + " ftp");
         
-        String click = t._2.buildTree(props).getClickStreamList(props).toString();
-        System.out.println(click);
+        //for test
+        System.out.println("original logs:");
+        for(WebLog log : logs){
+          System.out.println(log.log);
+        }
+        
+        t._2.parseLogs();
+        /* System.out.println("SessionTree:");
+        SessionTree tree = t._2.buildTree(props);
+        //for test
+        
+        System.out.println("SessionTree:");
+        SessionTree tree = t._2.buildTree(props);
+        List<RecomTrainData> clicks = t._2.getRecomTrainData(tree);
+        if(clicks.size() == 0){
+          System.out.println("no click behaviour");
+        }else{
+          for(RecomTrainData click: clicks){
+            System.out.println(click.toString());
+          }
+        }*/
       }
       System.out.println("***************");
     });
@@ -132,12 +134,14 @@ public class LogMonitor {
   }
 
   public static void main(String[] args) throws Exception {
-    if (args.length == 0) {
+   /* if (args.length == 0) {
       System.out.println("Must specify an access logs directory.");
       System.exit(-1);
     }
 
-    String directory = args[0];
+    String directory = args[0];*/
+    
+    String directory = "E://data//mudrod//streamtest";
 
     MudrodEngine mudrod = new MudrodEngine();
     Properties props = mudrod.loadConfig();

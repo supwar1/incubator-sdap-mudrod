@@ -21,14 +21,16 @@ import java.util.Properties;
  * http://httpd.apache.org/docs/2.2/logs.html for more details.
  */
 public class WebLog implements Serializable {
-  String logType;
+  String LogType;
   String IP;
-  String time;
-  String request;
-  double bytes;
+  String Time;
+  String Request;
+  double Bytes;
+  
+  public String log; //for test
 
   public String getLogType() {
-    return this.logType;
+    return this.LogType;
   }
 
   public String getIP() {
@@ -36,15 +38,15 @@ public class WebLog implements Serializable {
   }
 
   public String getTime() {
-    return this.time;
+    return this.Time;
   }
 
   public String getRequest() {
-    return this.request;
+    return this.Request;
   }
 
   public double getBytes() {
-    return this.bytes;
+    return this.Bytes;
   }
 
   public WebLog() {

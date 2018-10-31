@@ -148,7 +148,7 @@ public class SessionTree extends MudrodAbstract {
    */
   public void printTree(SessionNode node) {
     LOG.info("node: {} \n", node.getRequest());
-    if (node.children.isEmpty()) {
+    if (!node.children.isEmpty()) {
       for (int i = 0; i < node.children.size(); i++) {
         printTree(node.children.get(i));
       }
@@ -439,7 +439,7 @@ public class SessionTree extends MudrodAbstract {
     return this.getNodes(node, MudrodConstants.SEARCH_MARKER);
   }
 
-  private List<SessionNode> getNodes(SessionNode node, String nodeKey) {
+  public List<SessionNode> getNodes(SessionNode node, String nodeKey) {
 
     List<SessionNode> nodes = new ArrayList<>();
     if (node.getKey().equals(nodeKey)) {

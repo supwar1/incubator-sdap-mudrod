@@ -7,10 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.structure.log.ApacheAccessLog;
+import org.apache.sdap.mudrod.weblog.structure.log.RequestUrl;
 import org.apache.sdap.mudrod.weblog.structure.log.WebLog;
+import org.apache.sdap.mudrod.weblog.structure.session.ClickStream;
 import org.apache.sdap.mudrod.weblog.structure.session.SessionNode;
 import org.apache.sdap.mudrod.weblog.structure.session.SessionTree;
 import org.elasticsearch.action.search.SearchResponse;
@@ -20,6 +23,8 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import com.clearspring.analytics.stream.membership.Filter;
 
 public class DynamicSession implements Serializable {
 
@@ -114,20 +119,6 @@ public class DynamicSession implements Serializable {
 
     return s;
   }
-  
-  public static DynamicSession add(DynamicSession s1, DynamicSession s2, Properties props) {
-    DynamicSession s = DynamicSession.add(s1,s2);
-
-    try {
-      s.buildTree(props);
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    
-    return s;
-  }
-
 
   public boolean hasHttpLog() {
     boolean hasHttp = false;
@@ -138,6 +129,46 @@ public class DynamicSession implements Serializable {
       }
     }
     return hasHttp;
+  }
+  
+  public void parseLogs() {
+    RequestUrl requestURL = new RequestUrl();
+    for (WebLog log : logList) {
+      if (log.getLogType().equals(MudrodConstants.HTTP_LOG)) {
+        String queryUrl = log.getRequest();
+        if(queryUrl.contains("datasetlist")){
+          String searchStr = requestURL.getSearchWord(queryUrl);
+          Map<String, String> filter = null;
+          try {
+            filter = RequestUrl.getFilterInfo(queryUrl);
+          } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+          
+          String searchInfo = "";
+          if(!searchStr.equals("")){
+            searchInfo += "search:" + searchStr + " | " ;
+          }
+          
+          if(filter != null && filter.size()>0){
+            for(String field: filter.keySet()){
+              searchInfo += field + ":" + filter.get(field) + " | ";
+            }
+          }
+          
+          if(!searchInfo.equals("")){
+            System.out.println("search behaviour: " + searchInfo);
+          }
+        }
+        else{
+          String dataset = queryUrl.replace("GET /dataset?", "");
+          System.out.println("click behaviour: " + dataset);
+        }
+      }else{
+        System.out.println("download behaviour");
+      }
+    }
   }
   
   public SessionTree buildTree(Properties props) throws UnsupportedEncodingException {
@@ -158,7 +189,81 @@ public class DynamicSession implements Serializable {
       tree.insert(node);
       seq++;
     }
+    
+    tree.printTree(tree.getRoot());
 
     return tree;
+  }
+
+  /**
+   * Obtain the ranking training data.
+   *
+   * @param indexName
+   *            the index from whcih to obtain the data
+   * @param sessionID
+   *            a valid session identifier
+   * @return {@link ClickStream}
+   * @throws UnsupportedEncodingException
+   *             if there is an error whilst processing the ranking training
+   *             data.
+   */
+  public List<RecomTrainData> getRecomTrainData(SessionTree tree)
+      throws UnsupportedEncodingException {
+
+    List<RecomTrainData> trainDatas = new ArrayList<>();
+
+    List<SessionNode> branches = tree.getRoot().getChildren();
+    for (int i = 0; i < branches.size(); i++) {
+      SessionNode branch = branches.get(i);
+      List<SessionNode> branchDataNodes = tree.getNodes(branch, "dataset");
+      if(branchDataNodes.size() <= 1){ //important
+        continue;
+      }
+      
+      List<String> queries = new ArrayList<String>();
+      List<Map<String, String>> filters = new ArrayList<Map<String, String>>();
+      List<String> datasets = new ArrayList<String>();
+      List<Boolean> bDownloads = new ArrayList<Boolean>();
+      List<String> requests = new ArrayList<String>(); 
+      
+      for (int j = 0; j < branchDataNodes.size(); j++) {
+        SessionNode datanode = branchDataNodes.get(j);
+        String datasetId = datanode.getDatasetId();
+        boolean bDownload = false;
+        List<SessionNode> dataChildren = datanode.getChildren();
+        int childSize = dataChildren.size();
+        for (int k = 0; k < childSize; k++) {
+          if ("ftp".equals(dataChildren.get(k).getKey())) {
+            bDownload = true;
+            break;
+          }
+        }
+
+        RequestUrl requestURL = new RequestUrl();
+        String queryUrl = datanode.getRequest();
+        String searchStr = requestURL.getSearchWord(queryUrl);
+        /*String query = null;
+        try {
+          query = es.customAnalyzing(props.getProperty("indexName"), searchStr);
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException("Error performing custom analyzing", e);
+        }*/
+        Map<String, String> filter = RequestUrl.getFilterInfo(queryUrl);
+        
+        datasets.add(datasetId);
+        bDownloads.add(bDownload);
+        queries.add(searchStr);
+        filters.add(filter);  
+        requests.add(queryUrl);
+      }
+      
+      RecomTrainData trainData = new RecomTrainData(datasets, queries, filters, bDownloads);
+      //trainData.setIndex(indexName);
+      //trainData.setSessionId(sessionID);
+      trainData.setRequests(requests);
+      trainDatas.add(trainData);
+    }
+    
+    return trainDatas;
   }
 }

@@ -32,25 +32,25 @@ import java.util.regex.Pattern;
  * http://httpd.apache.org/docs/2.2/logs.html for more details.
  */
 public class ApacheAccessLog extends WebLog implements Serializable {
-  String response;
-  String referer;
-  String agent;
+  String Response;
+  String Referer;
+  String Browser;
 
   @Override
   public double getBytes() {
-    return this.bytes;
+    return this.Bytes;
   }
 
-  public String getAgent() {
-    return this.agent;
+  public String getBrowser() {
+    return this.Browser;
   }
 
   public String getResponse() {
-    return this.response;
+    return this.Response;
   }
 
   public String getReferer() {
-    return this.referer;
+    return this.Referer;
   }
 
   public ApacheAccessLog() {
@@ -115,15 +115,17 @@ public class ApacheAccessLog extends WebLog implements Serializable {
       }
 
       ApacheAccessLog accesslog = new ApacheAccessLog();
-      accesslog.logType = MudrodConstants.HTTP_LOG;
+      accesslog.LogType = MudrodConstants.HTTP_LOG;
       accesslog.IP = matcher.group(1);
-      accesslog.request = matcher.group(5);
-      accesslog.response = matcher.group(6);
-      accesslog.bytes = Double.parseDouble(bytes);
-      accesslog.referer = matcher.group(8);
-      accesslog.agent = matcher.group(9);
+      accesslog.Request = matcher.group(5);
+      accesslog.Response = matcher.group(6);
+      accesslog.Bytes = Double.parseDouble(bytes);
+      accesslog.Referer = matcher.group(8);
+      accesslog.Browser = matcher.group(9);
       SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-      accesslog.time = df.format(date);
+      accesslog.Time = df.format(date);
+      
+      accesslog.log = log; //for test
 
       return accesslog;
     }

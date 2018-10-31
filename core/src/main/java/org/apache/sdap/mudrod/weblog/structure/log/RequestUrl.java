@@ -261,5 +261,35 @@ public class RequestUrl {
 
     return filterValues;
   }
+  
+  /**
+   * GetSearchWord: Get search words from url link
+   *
+   * @param url request url
+   * @return query
+   */
+  public static String getSearchWord(String url) {
+    String keyword = "";
+
+    Map<String, String> mapRequest = RequestUrl.uRLRequest(url);
+    if (mapRequest.get("search") != null) {
+      try {
+        keyword = mapRequest.get("search");
+
+        keyword = URLDecoder.decode(keyword.replaceAll("%(?![0-9a-fA-F]{2})", "%25"), "UTF-8");
+        if (keyword.contains("%2b") || keyword.contains("%20") || keyword.contains("%25")) {
+          keyword = keyword.replace("%2b", " ");
+          keyword = keyword.replace("%20", " ");
+          keyword = keyword.replace("%25", " ");
+        }
+        keyword = keyword.replaceAll("[-+^:,*_\"]", " ").replace("\\", " ").replaceAll("\\s+", " ").trim();
+      } catch (UnsupportedEncodingException e) {
+        LOG.error(mapRequest.get("search"));
+        e.printStackTrace();
+      }
+    }
+
+    return keyword;
+  }
 
 }
