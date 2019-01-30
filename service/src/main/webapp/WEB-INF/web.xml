@@ -33,6 +33,7 @@
                 org.apache.sdap.mudrod.services.search.SearchMetadataResource,
                 org.apache.sdap.mudrod.services.search.SearchVocabResource,
                 org.apache.sdap.mudrod.services.search.SessionDetailResource,
+				org.apache.sdap.mudrod.services.log.LogIngestionResource,
             </param-value>
         </init-param>
         <init-param>

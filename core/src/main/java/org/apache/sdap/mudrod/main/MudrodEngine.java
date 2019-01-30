@@ -103,6 +103,10 @@ public class MudrodEngine {
   public Properties getConfig() {
     return props;
   }
+  
+  public void setConfig(Properties props) {
+     this.props = props;
+  }
 
   /**
    * Retreive the Mudrod {@link ESDriver}
@@ -127,7 +131,7 @@ public class MudrodEngine {
 
     String configLocation = System.getenv(MudrodConstants.MUDROD_CONFIG) == null ? "" : System.getenv(MudrodConstants.MUDROD_CONFIG);
     File configFile = new File(configLocation);
-
+  
     try {
       InputStream configStream = new FileInputStream(configFile);
       LOG.info("Loaded config file from " + configFile.getAbsolutePath());
