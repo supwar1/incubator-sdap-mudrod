@@ -127,6 +127,8 @@ public class ImportLogFile extends LogAbstract {
 
     String httplogpath = null;
     String ftplogpath = null;
+    String threddspath = null;
+    String opendappath = null;
     
     File directory = new File(props.getProperty(MudrodConstants.DATA_DIR));
     File[] fList = directory.listFiles();
@@ -142,6 +144,8 @@ public class ImportLogFile extends LogAbstract {
         {
           ftplogpath = file.getAbsolutePath();
         }
+        
+        // add thredds and opendap
       }
     }
     
@@ -176,5 +180,15 @@ public class ImportLogFile extends LogAbstract {
     // import ftp logs
     JavaRDD<String> ftpLogs = spark.sc.textFile(ftplogpath, this.partition).map(s -> FtpLog.parseFromLogLine(s, props)).filter(FtpLog::checknull);
     JavaEsSpark.saveJsonToEs(ftpLogs, logIndex + "/" + this.ftpType);
+  }
+  
+  public void importThreddsfile(String httplogpath) {
+    // import thredds logs
+    
+  }
+
+  public void importOpenDapfile(String ftplogpath) {
+    // import Opendap logs
+
   }
 }

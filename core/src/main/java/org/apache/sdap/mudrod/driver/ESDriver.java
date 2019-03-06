@@ -491,12 +491,12 @@ public class ESDriver implements Serializable {
     Client client = null;
 
     if (hosts != null && port > 1) {
-      try (TransportClient transportClient = new ESTransportClient(settings)) {
+      /*try (*/TransportClient transportClient = new ESTransportClient(settings);/*) {*/
         for (String host : hosts) {
           transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port));
         }
         return transportClient;
-      }
+      //}
     } else if (clusterName != null) {
       node = new Node(settings);
       client = node.client();
