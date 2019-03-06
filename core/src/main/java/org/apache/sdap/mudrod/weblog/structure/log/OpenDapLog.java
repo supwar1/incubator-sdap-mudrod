@@ -1,8 +1,11 @@
 package org.apache.sdap.mudrod.weblog.structure.log;
 
-public class OpendapLog extends ApacheAccessLog {
+import java.util.Properties;
 
-  public static String parseFromLogLine(String log, Properties props) throws ParseException {
+public class OpenDapLog extends ApacheAccessLog {
+
+  public static String parseFromLogLine(String log, Properties props) {
+	return log;
 
   }
 }
