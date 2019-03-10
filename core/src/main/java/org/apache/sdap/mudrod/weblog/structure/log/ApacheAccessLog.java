@@ -18,7 +18,6 @@ import com.google.gson.Gson;
 import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.pre.CrawlerDetection;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -96,7 +95,7 @@ public class ApacheAccessLog extends WebLog implements Serializable {
       }
 
       ApacheAccessLog accesslog = new ApacheAccessLog();
-      accesslog.LogType = MudrodConstants.HTTP_LOG;
+      accesslog.LogType = MudrodConstants.ACCESS_LOG;
       accesslog.IP = matcher.group(1);
       accesslog.Request = matcher.group(5);
       accesslog.Response = matcher.group(6);

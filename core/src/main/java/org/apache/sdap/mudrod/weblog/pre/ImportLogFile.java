@@ -18,6 +18,8 @@ import org.apache.sdap.mudrod.driver.SparkDriver;
 import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.structure.log.ApacheAccessLog;
 import org.apache.sdap.mudrod.weblog.structure.log.FtpLog;
+import org.apache.sdap.mudrod.weblog.structure.log.OpenDapLog;
+import org.apache.sdap.mudrod.weblog.structure.log.ThreddsLog;
 import org.apache.spark.api.java.JavaRDD;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
@@ -124,71 +126,91 @@ public class ImportLogFile extends LogAbstract {
   }
 
   public void readFile() {
-
-    String httplogpath = null;
-    String ftplogpath = null;
-    String threddspath = null;
-    String opendappath = null;
+	
+	String ftplogpath = null;
+	
+    String accesslogpath = null;
+    String threddslogpath = null;
+    String opendaplogpath = null;
     
     File directory = new File(props.getProperty(MudrodConstants.DATA_DIR));
     File[] fList = directory.listFiles();
     for (File file : fList) {
       if (file.isFile() && file.getName().contains(props.getProperty(MudrodConstants.TIME_SUFFIX))) 
       {
-        if (file.getName().contains(props.getProperty(MudrodConstants.HTTP_PREFIX))) 
-        {
-          httplogpath = file.getAbsolutePath();
-        }
         
         if (file.getName().contains(props.getProperty(MudrodConstants.FTP_PREFIX))) 
         {
           ftplogpath = file.getAbsolutePath();
         }
         
-        // add thredds and opendap
+        if (file.getName().contains(props.getProperty(MudrodConstants.ACCESS_PREFIX))) 
+        {
+          accesslogpath = file.getAbsolutePath();
+        }
+        
+        if (file.getName().contains(props.getProperty(MudrodConstants.THREDDS_PREFIX))) 
+        {
+          threddslogpath = file.getAbsolutePath();
+        }
+        
+        if (file.getName().contains(props.getProperty(MudrodConstants.OPENDAP_PREFIX))) 
+        {
+          opendaplogpath = file.getAbsolutePath();
+        }
+        
       }
     }
     
-    if(httplogpath == null || ftplogpath == null)
+    if(ftplogpath == null || accesslogpath == null || threddslogpath == null || opendaplogpath == null)
     {
-      LOG.error("WWW file or FTP logs cannot be found, please check your data directory.");
+      LOG.error("WWW file or FTP logs or THREDDS logs or OPENDAP logs cannot be found, please check your data directory.");
       return;
     }
 
-    readFileInParallel(httplogpath, ftplogpath);
+    readFileInParallel(ftplogpath, accesslogpath, threddslogpath, opendaplogpath);
   }
 
   /**
    * Read the FTP or HTTP log path with the intention of processing lines from
    * log files.
    *
-   * @param httplogpath path to the parent directory containing http logs
-   * @param ftplogpath  path to the parent directory containing ftp logs
+   * @param httplogpath path to the parent directory containing ftp logs
+   * @param ftplogpath  path to the parent directory containing access logs
+   * @param httplogpath path to the parent directory containing thredds logs
+   * @param ftplogpath  path to the parent directory containing opendap logs
    */
-  public void readFileInParallel(String httplogpath, String ftplogpath) {
-    importHttpfile(httplogpath);
-    importFtpfile(ftplogpath);
+  public void readFileInParallel(String ftplogpath, String accesslogpath, String threddslogpath, String opendaplogpath) {
+	importFtpfile(ftplogpath);
+    importAccessfile(accesslogpath);
+    importThreddsfile(threddslogpath);
+    importOpenDapfile(opendaplogpath);
   }
-
-  public void importHttpfile(String httplogpath) {
-    // import http logs
+  
+  public void importFtpfile(String ftplogpath) {
+	    // import ftp logs
+	    JavaRDD<String> ftpLogs = spark.sc.textFile(ftplogpath, this.partition).map(s -> FtpLog.parseFromLogLine(s, props)).filter(FtpLog::checknull);
+	    JavaEsSpark.saveJsonToEs(ftpLogs, logIndex + "/" + this.ftpType);
+  }
+  
+  public void importAccessfile(String httplogpath) {
+    // import access logs
     JavaRDD<String> accessLogs = spark.sc.textFile(httplogpath, this.partition).map(s -> ApacheAccessLog.parseFromLogLine(s, props)).filter(ApacheAccessLog::checknull);
     JavaEsSpark.saveJsonToEs(accessLogs, logIndex + "/" + this.httpType);
   }
 
-  public void importFtpfile(String ftplogpath) {
-    // import ftp logs
-    JavaRDD<String> ftpLogs = spark.sc.textFile(ftplogpath, this.partition).map(s -> FtpLog.parseFromLogLine(s, props)).filter(FtpLog::checknull);
-    JavaEsSpark.saveJsonToEs(ftpLogs, logIndex + "/" + this.ftpType);
-  }
   
-  public void importThreddsfile(String httplogpath) {
-    // import thredds logs
-    
-  }
+	public void importThreddsfile(String httplogpath) {
+		// import thredds logs
+		JavaRDD<String> threddsLogs = spark.sc.textFile(httplogpath, this.partition)
+				.map(s -> ThreddsLog.parseFromLogLine(s, props)).filter(ThreddsLog::checknull);
+		JavaEsSpark.saveJsonToEs(threddsLogs, logIndex + "/" + this.httpType);
+	}
 
-  public void importOpenDapfile(String ftplogpath) {
-    // import Opendap logs
-
-  }
+	public void importOpenDapfile(String httplogpath) {
+		// import opendap logs
+		JavaRDD<String> opendapLogs = spark.sc.textFile(httplogpath, this.partition)
+				.map(s -> OpenDapLog.parseFromLogLine(s, props)).filter(OpenDapLog::checknull);
+		JavaEsSpark.saveJsonToEs(opendapLogs, logIndex + "/" + this.httpType);
+	}
 }
