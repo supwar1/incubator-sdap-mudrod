@@ -59,6 +59,19 @@ public interface MudrodConstants {
   public static final String HTTP_TYPE = "raw.http";
 
   public static final String HTTP_LOG = "http";
+  
+  // ***
+  public static final String ACCESS_PREFIX = "mudrod.access.prefix";
+
+  public static final String ACCESS_LOG = "access";
+  
+  public static final String THREDDS_PREFIX = "mudrod.thredds.prefix";
+
+  public static final String THREDDS_LOG = "thredds";
+  
+  public static final String OPENDAP_PREFIX = "mudrod.opendap.prefix";
+
+  public static final String OPENDAP_LOG = "opendap";
 
   public static final String BASE_URL = "mudrod.base.url";
 
