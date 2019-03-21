@@ -57,8 +57,12 @@ public class HttpLog extends WebLog implements Serializable {
 	public HttpLog() {
 		  super();
 	}
+	
+	public static String getLogtype(){
+	  return MudrodConstants.HTTP_LOG;
+	}
 
-	public static String parseFromLogLine(String log, Properties props) throws ParseException {
+	public static String parseFromLogLine(String log, Properties props, String type) throws ParseException {
 
 	  String logEntryPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})] \"(.+?)\" (\\d{3}) (\\d+|-) \"((?:[^\"]|\")+)\" \"([^\"]+)\"";
 	  final int numFields = 9;
@@ -101,7 +105,7 @@ public class HttpLog extends WebLog implements Serializable {
 	    HttpLog httpLog = new HttpLog();
 	    
 	    // *** need to be modified
-	    httpLog.LogType = MudrodConstants.HTTP_LOG;
+	    httpLog.LogType = type;
 	    httpLog.IP = matcher.group(1);
 	    httpLog.Request = matcher.group(5);
 	    httpLog.Response = matcher.group(6);

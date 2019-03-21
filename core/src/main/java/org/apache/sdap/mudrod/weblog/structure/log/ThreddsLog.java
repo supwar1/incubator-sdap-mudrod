@@ -39,63 +39,8 @@ public class ThreddsLog extends HttpLog implements Serializable {
 		super();
 	}
 	
-	public static String parseFromLogLine(String log, Properties props) throws ParseException {
-		String logEntryPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})] \"(.+?)\" (\\d{3}) (\\d+|-) \"((?:[^\"]|\")+)\" \"([^\"]+)\"";
-		final int numFields = 9;
-		Pattern p = Pattern.compile(logEntryPattern);
-		Matcher matcher;
+	public static String getLogtype(){
+    return MudrodConstants.THREDDS_LOG;
+  }
 
-		String lineJson = "{}";
-		matcher = p.matcher(log);
-		if (!matcher.matches() || numFields != matcher.groupCount()) {
-			return lineJson;
-		}
-
-		String time = matcher.group(4);
-		time = SwithtoNum(time);
-		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy:HH:mm:ss");
-		Date date = formatter.parse(time);
-
-		String bytes = matcher.group(7);
-
-		if ("-".equals(bytes)) {
-			bytes = "0";
-		}
-
-		String request = matcher.group(5).toLowerCase();
-		String agent = matcher.group(9);
-
-		// *** need to be modified
-		CrawlerDetection crawlerDe = new CrawlerDetection(props);
-		if (crawlerDe.checkKnownCrawler(agent)) {
-			return lineJson;
-		} else {
-
-			String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
-			for (String mimeType : mimeTypes) {
-				if (request.contains(mimeType)) {
-					return lineJson;
-				}
-			}
-
-			ThreddsLog threddsLog = new ThreddsLog();
-
-			// *** need to be modified
-			threddsLog.LogType = MudrodConstants.THREDDS_LOG;
-			threddsLog.IP = matcher.group(1);
-			threddsLog.Request = matcher.group(5);
-			threddsLog.Response = matcher.group(6);
-			threddsLog.Bytes = Double.parseDouble(bytes);
-			threddsLog.Referer = matcher.group(8);
-			threddsLog.Browser = matcher.group(9);
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-			threddsLog.Time = df.format(date);
-
-			Gson gson = new Gson();
-			lineJson = gson.toJson(threddsLog);
-
-			return lineJson;
-
-		}
-	}
 }
