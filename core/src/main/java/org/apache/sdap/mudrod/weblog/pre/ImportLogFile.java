@@ -18,6 +18,7 @@ import org.apache.sdap.mudrod.driver.SparkDriver;
 import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.structure.log.ApacheAccessLog;
 import org.apache.sdap.mudrod.weblog.structure.log.FtpLog;
+import org.apache.sdap.mudrod.weblog.structure.log.HttpLog;
 import org.apache.sdap.mudrod.weblog.structure.log.OpenDapLog;
 import org.apache.sdap.mudrod.weblog.structure.log.ThreddsLog;
 import org.apache.spark.api.java.JavaRDD;
@@ -57,7 +58,7 @@ public class ImportLogFile extends LogAbstract {
   public static final int NUM_FIELDS = 9;
   Pattern p = Pattern.compile(logEntryPattern);
   transient Matcher matcher;
-  
+
   @Override
   public Object execute(Object o) {
     return null;
@@ -66,12 +67,13 @@ public class ImportLogFile extends LogAbstract {
   /**
    * Constructor supporting a number of parameters documented below.
    *
-   * @param props a {@link java.util.Map} containing K,V of type String, String
-   *              respectively.
-   * @param es    the {@link ESDriver} used to persist log
-   *              files.
-   * @param spark the {@link SparkDriver} used to process
-   *              input log files.
+   * @param props
+   *          a {@link java.util.Map} containing K,V of type String, String
+   *          respectively.
+   * @param es
+   *          the {@link ESDriver} used to persist log files.
+   * @param spark
+   *          the {@link SparkDriver} used to process input log files.
    */
   public ImportLogFile(Properties props, ESDriver es, SparkDriver spark) {
     super(props, es, spark);
@@ -92,7 +94,8 @@ public class ImportLogFile extends LogAbstract {
    * Utility function to aid String to Number formatting such that three letter
    * months such as 'Jan' are converted to the Gregorian integer equivalent.
    *
-   * @param time the input {@link java.lang.String} to convert to int.
+   * @param time
+   *          the input {@link java.lang.String} to convert to int.
    * @return the converted Month as an int.
    */
   public String switchtoNum(String time) {
@@ -126,44 +129,38 @@ public class ImportLogFile extends LogAbstract {
   }
 
   public void readFile() {
-	
-	String ftplogpath = null;
-	
+
+    String ftplogpath = null;
+
     String accesslogpath = null;
     String threddslogpath = null;
     String opendaplogpath = null;
-    
+
     File directory = new File(props.getProperty(MudrodConstants.DATA_DIR));
     File[] fList = directory.listFiles();
     for (File file : fList) {
-      if (file.isFile() && file.getName().contains(props.getProperty(MudrodConstants.TIME_SUFFIX))) 
-      {
-        
-        if (file.getName().contains(props.getProperty(MudrodConstants.FTP_PREFIX))) 
-        {
+      if (file.isFile() && file.getName().contains(props.getProperty(MudrodConstants.TIME_SUFFIX))) {
+
+        if (file.getName().contains(props.getProperty(MudrodConstants.FTP_PREFIX))) {
           ftplogpath = file.getAbsolutePath();
         }
-        
-        if (file.getName().contains(props.getProperty(MudrodConstants.ACCESS_PREFIX))) 
-        {
+
+        if (file.getName().contains(props.getProperty(MudrodConstants.ACCESS_PREFIX))) {
           accesslogpath = file.getAbsolutePath();
         }
-        
-        if (file.getName().contains(props.getProperty(MudrodConstants.THREDDS_PREFIX))) 
-        {
+
+        if (file.getName().contains(props.getProperty(MudrodConstants.THREDDS_PREFIX))) {
           threddslogpath = file.getAbsolutePath();
         }
-        
-        if (file.getName().contains(props.getProperty(MudrodConstants.OPENDAP_PREFIX))) 
-        {
+
+        if (file.getName().contains(props.getProperty(MudrodConstants.OPENDAP_PREFIX))) {
           opendaplogpath = file.getAbsolutePath();
         }
-        
+
       }
     }
-    
-    if(ftplogpath == null || accesslogpath == null || threddslogpath == null || opendaplogpath == null)
-    {
+
+    if (ftplogpath == null || accesslogpath == null || threddslogpath == null || opendaplogpath == null) {
       LOG.error("WWW file or FTP logs or THREDDS logs or OPENDAP logs cannot be found, please check your data directory.");
       return;
     }
@@ -175,42 +172,44 @@ public class ImportLogFile extends LogAbstract {
    * Read the FTP or HTTP log path with the intention of processing lines from
    * log files.
    *
-   * @param httplogpath path to the parent directory containing ftp logs
-   * @param ftplogpath  path to the parent directory containing access logs
-   * @param httplogpath path to the parent directory containing thredds logs
-   * @param ftplogpath  path to the parent directory containing opendap logs
+   * @param httplogpath
+   *          path to the parent directory containing ftp logs
+   * @param ftplogpath
+   *          path to the parent directory containing access logs
+   * @param httplogpath
+   *          path to the parent directory containing thredds logs
+   * @param ftplogpath
+   *          path to the parent directory containing opendap logs
    */
   public void readFileInParallel(String ftplogpath, String accesslogpath, String threddslogpath, String opendaplogpath) {
-	importFtpfile(ftplogpath);
     importAccessfile(accesslogpath);
     importThreddsfile(threddslogpath);
     importOpenDapfile(opendaplogpath);
+    importFtpfile(ftplogpath);
   }
-  
+
+  //import ftp logs
   public void importFtpfile(String ftplogpath) {
-	    // import ftp logs
-	    JavaRDD<String> ftpLogs = spark.sc.textFile(ftplogpath, this.partition).map(s -> FtpLog.parseFromLogLine(s, props)).filter(FtpLog::checknull);
-	    JavaEsSpark.saveJsonToEs(ftpLogs, logIndex + "/" + this.ftpType);
+    
+    JavaRDD<String> ftpLogs = spark.sc.textFile(ftplogpath, this.partition).map(s -> FtpLog.parseFromLogLine(s, props)).filter(FtpLog::checknull);
+    JavaEsSpark.saveJsonToEs(ftpLogs, logIndex + "/" + this.ftpType);
   }
   
+  //import access logs
   public void importAccessfile(String httplogpath) {
-    // import access logs
-    JavaRDD<String> accessLogs = spark.sc.textFile(httplogpath, this.partition).map(s -> ApacheAccessLog.parseFromLogLine(s, props)).filter(ApacheAccessLog::checknull);
+    JavaRDD<String> accessLogs = spark.sc.textFile(httplogpath, this.partition).map(s -> HttpLog.parseFromLogLine(s, props, MudrodConstants.ACCESS_LOG)).filter(ApacheAccessLog::checknull);
     JavaEsSpark.saveJsonToEs(accessLogs, logIndex + "/" + this.httpType);
   }
 
-  
-	public void importThreddsfile(String httplogpath) {
-		// import thredds logs
-		JavaRDD<String> threddsLogs = spark.sc.textFile(httplogpath, this.partition)
-				.map(s -> ThreddsLog.parseFromLogLine(s, props)).filter(ThreddsLog::checknull);
-		JavaEsSpark.saveJsonToEs(threddsLogs, logIndex + "/" + this.httpType);
-	}
+  public void importThreddsfile(String httplogpath) {
+    // import thredds logs
+    JavaRDD<String> threddsLogs = spark.sc.textFile(httplogpath, this.partition).map(s -> HttpLog.parseFromLogLine(s, props, MudrodConstants.THREDDS_LOG)).filter(ThreddsLog::checknull);
+    JavaEsSpark.saveJsonToEs(threddsLogs, logIndex + "/" + this.httpType);
+  }
 
-	public void importOpenDapfile(String httplogpath) {
-		// import opendap logs
-		JavaRDD<String> opendapLogs = spark.sc.textFile(httplogpath, this.partition)
-				.map(s -> OpenDapLog.parseFromLogLine(s, props)).filter(OpenDapLog::checknull);
-		JavaEsSpark.saveJsonToEs(opendapLogs, logIndex + "/" + this.httpType);
-	}
+  public void importOpenDapfile(String httplogpath) {
+    // import opendap logs
+    JavaRDD<String> opendapLogs = spark.sc.textFile(httplogpath, this.partition).map(s -> HttpLog.parseFromLogLine(s, props, MudrodConstants.OPENDAP_LOG)).filter(OpenDapLog::checknull);
+    JavaEsSpark.saveJsonToEs(opendapLogs, logIndex + "/" + this.httpType);
+  }
 }

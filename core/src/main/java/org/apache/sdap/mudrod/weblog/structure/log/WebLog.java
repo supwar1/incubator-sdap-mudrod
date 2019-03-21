@@ -14,6 +14,17 @@
 package org.apache.sdap.mudrod.weblog.structure.log;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.sdap.mudrod.main.MudrodConstants;
+import org.apache.sdap.mudrod.weblog.pre.CrawlerDetection;
+
+import com.google.gson.Gson;
 
 /**
  * This class represents an Apache access log line. See
