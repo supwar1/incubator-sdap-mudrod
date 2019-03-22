@@ -219,7 +219,10 @@ public class SessionGenerator extends LogAbstract {
     String logType;
     String id;
     String ip = user;
-    String indexUrl = props.getProperty(MudrodConstants.BASE_URL) + "/";
+    
+    String indexUrl_access = props.getProperty(MudrodConstants.ACCESS_URL) + "/";
+    String indexUrl_thredds = props.getProperty(MudrodConstants.THREDDS_LOG) + "/";
+    String indexUrl_opendap = props.getProperty(MudrodConstants.OPENDAP_LOG) + "/";
     DateTime time;
     DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
 
@@ -232,8 +235,10 @@ public class SessionGenerator extends LogAbstract {
         time = fmt.parseDateTime((String) result.get("Time"));
         id = hit.getId();
 
-        if (MudrodConstants.HTTP_LOG.equals(logType)) {
-          if ("-".equals(referer) || referer.equals(indexUrl) || !referer.contains(indexUrl)) {
+        if (MudrodConstants.ACCESS_LOG.equals(logType) || MudrodConstants.THREDDS_LOG.equals(logType)
+        			|| MudrodConstants.OPENDAP_LOG.equals(logType)) {
+          if ("-".equals(referer) || referer.equals(indexUrl_access) 
+        		  || !referer.contains(indexUrl_access) || !referer.contains(indexUrl_thredds) || !referer.contains(indexUrl_opendap)) {
             sessionCountIn++;
             sessionReqs.put(ip + "@" + sessionCountIn, new HashMap<String, DateTime>());
             sessionReqs.get(ip + "@" + sessionCountIn).put(request, time);

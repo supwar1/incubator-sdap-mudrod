@@ -119,6 +119,7 @@ public class LogAbstract extends DiscoveryStepAbstract {
 
     SearchResponse sr = es.getClient()
             .prepareSearch(logIndex)
+            // set types
             .setTypes(type)
             .setQuery(QueryBuilders.matchAllQuery())
             .setSize(0)
@@ -155,6 +156,7 @@ public class LogAbstract extends DiscoveryStepAbstract {
 
     SearchResponse sr = es.getClient()
             .prepareSearch(logIndex)
+            // httpType
             .setTypes(httpType)
             .setQuery(QueryBuilders.matchAllQuery())
             .setSize(0)

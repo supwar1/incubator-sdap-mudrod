@@ -73,7 +73,11 @@ public interface MudrodConstants {
 
   public static final String OPENDAP_LOG = "opendap";
 
-  public static final String BASE_URL = "mudrod.base.url";
+  public static final String ACCESS_URL = "mudrod.access.url";
+  
+  public static final String THREDDS_URL = "mudrod.thredds.url";
+  
+  public static final String OPENDAP_URL = "mudrod.opendap.url";
 
   public static final String BLACK_LIST_REQUEST = "mudrod.black.request.list";
 

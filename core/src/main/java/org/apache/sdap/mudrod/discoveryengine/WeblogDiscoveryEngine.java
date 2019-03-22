@@ -105,15 +105,16 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
       startTime = System.currentTimeMillis();
       LOG.info("Processing logs dated {}", anInputList);
 
-      /*DiscoveryStepAbstract im = new ImportLogFile(this.props, this.es, this.spark);
+      DiscoveryStepAbstract im = new ImportLogFile(this.props, this.es, this.spark);
       im.execute();
 
       DiscoveryStepAbstract cd = new CrawlerDetection(this.props, this.es, this.spark);
-      cd.execute();*/
+      cd.execute();
 
-      /* sg = new SessionGenerator(this.props, this.es, this.spark);
+      SessionGenerator sg = new SessionGenerator(this.props, this.es, this.spark);
       sg.execute();
-
+      
+      /*
       DiscoveryStepAbstract ss = new SessionStatistic(this.props, this.es, this.spark);
       ss.execute();
 

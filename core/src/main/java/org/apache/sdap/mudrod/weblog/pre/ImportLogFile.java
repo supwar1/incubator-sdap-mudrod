@@ -174,11 +174,11 @@ public class ImportLogFile extends LogAbstract {
    *
    * @param httplogpath
    *          path to the parent directory containing ftp logs
-   * @param ftplogpath
+   * @param accesslogpath
    *          path to the parent directory containing access logs
-   * @param httplogpath
+   * @param threddslogpath
    *          path to the parent directory containing thredds logs
-   * @param ftplogpath
+   * @param opendaplogpath
    *          path to the parent directory containing opendap logs
    */
   public void readFileInParallel(String ftplogpath, String accesslogpath, String threddslogpath, String opendaplogpath) {

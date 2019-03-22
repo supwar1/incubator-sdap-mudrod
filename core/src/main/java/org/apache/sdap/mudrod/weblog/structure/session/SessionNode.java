@@ -72,7 +72,7 @@ public class SessionNode {
     this.time = time;
     this.seq = seq;
     this.setRequest(request);
-    this.setReferer(referer, props.getProperty(MudrodConstants.BASE_URL));
+    // this.setReferer(referer, props.getProperty(MudrodConstants.BASE_URL));
     this.setKey(props, request, logType);
   }
 

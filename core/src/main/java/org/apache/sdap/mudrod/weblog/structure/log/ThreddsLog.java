@@ -19,28 +19,24 @@
 
 package org.apache.sdap.mudrod.weblog.structure.log;
 
-import java.text.ParseException;
-import java.util.Properties;
-
-import com.google.gson.Gson;
-
 import org.apache.sdap.mudrod.main.MudrodConstants;
-import org.apache.sdap.mudrod.weblog.pre.CrawlerDetection;
-
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+/**
+ * This class represents an Thredds log line. See
+ * http://httpd.apache.org/docs/2.2/logs.html for more details.
+ */
 
 public class ThreddsLog extends HttpLog implements Serializable {
 
 	public ThreddsLog() {
 		super();
+		this.LogType = MudrodConstants.THREDDS_LOG;
 	}
 	
-	public static String getLogtype(){
-    return MudrodConstants.THREDDS_LOG;
-  }
+	@Override
+	public String getURL() {
+		return MudrodConstants.THREDDS_URL;
+	}
 
 }
