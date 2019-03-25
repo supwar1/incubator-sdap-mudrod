@@ -31,13 +31,11 @@ import java.util.regex.Pattern;
  * http://httpd.apache.org/docs/2.2/logs.html for more details.
  */
 
-
 public class HttpLog extends WebLog implements Serializable {
 
 	String Response;
 	String Referer;
 	String Browser;
-
 
 	public HttpLog() {
 		super();
@@ -95,14 +93,13 @@ public class HttpLog extends WebLog implements Serializable {
 		if (crawlerDe.checkKnownCrawler(agent)) {
 			return lineJson;
 		} else {
-			
+
 			String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
 			for (String mimeType : mimeTypes) {
 				if (request.contains(mimeType)) {
 					return lineJson;
 				}
 			}
-			
 
 			HttpLog httpLog = new HttpLog();
 
@@ -111,7 +108,31 @@ public class HttpLog extends WebLog implements Serializable {
 			httpLog.Request = matcher.group(5);
 			httpLog.Response = matcher.group(6);
 			httpLog.Bytes = Double.parseDouble(bytes);
+			
+			
 			httpLog.Referer = matcher.group(8);
+			if (httpLog.Referer.length() >= 35 && httpLog.Referer.substring(0, 4).equals("http")) {
+			  if (httpLog.Referer.charAt(4) != 's') {
+			    httpLog.Referer.replaceFirst("http", "https");
+			  }
+			  if (httpLog.Referer.substring(8, 15).equals("podaac-")) {
+			    // https://podaac-www.jpl.nasa.gov/dataaccess
+			    // https://podaac-ftp.jpl.nasa.gov/dataaccess
+			    if (httpLog.Referer.substring(15, 18).equals("www")) {
+//			      System.out.println(httpLog.LogType + " www " + httpLog.Referer);
+			      httpLog.Referer.replaceFirst("-www", "");
+			    } else if (httpLog.Referer.substring(15, 18).equals("ftp")) {
+//			      System.out.println(httpLog.LogType + " ftp " + httpLog.Referer);
+			      httpLog.Referer.replaceFirst("-ftp", "");
+			    } else if (httpLog.Referer.substring(15, 22).equals("opendap")) {
+			      // https://podaac-opendap.jpl.nasa.gov/opendap/allData/aquarius/L3/mapped/V5/7day_running/SCI/2014/contents.html
+//			      System.out.println(httpLog.LogType + " podaac- " + httpLog.Referer);
+	          httpLog.Referer.replaceFirst("podaac-", "");
+			    }
+			    
+			  }
+			}
+			
 			httpLog.Browser = matcher.group(9);
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
 			httpLog.Time = df.format(date);

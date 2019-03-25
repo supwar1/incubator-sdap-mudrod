@@ -238,7 +238,7 @@ public class SessionGenerator extends LogAbstract {
         if (MudrodConstants.ACCESS_LOG.equals(logType) || MudrodConstants.THREDDS_LOG.equals(logType)
         			|| MudrodConstants.OPENDAP_LOG.equals(logType)) {
           if ("-".equals(referer) || referer.equals(indexUrl_access) 
-        		  || !referer.contains(indexUrl_access) || !referer.contains(indexUrl_thredds) || !referer.contains(indexUrl_opendap)) {
+        		  || (!referer.contains(indexUrl_access) && !referer.contains(indexUrl_thredds) && !referer.contains(indexUrl_opendap))) {
             sessionCountIn++;
             sessionReqs.put(ip + "@" + sessionCountIn, new HashMap<String, DateTime>());
             sessionReqs.get(ip + "@" + sessionCountIn).put(request, time);

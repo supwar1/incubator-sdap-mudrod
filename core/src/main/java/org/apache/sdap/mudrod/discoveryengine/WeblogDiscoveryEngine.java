@@ -107,7 +107,8 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
 
       DiscoveryStepAbstract im = new ImportLogFile(this.props, this.es, this.spark);
       im.execute();
-
+      
+      
       DiscoveryStepAbstract cd = new CrawlerDetection(this.props, this.es, this.spark);
       cd.execute();
 
