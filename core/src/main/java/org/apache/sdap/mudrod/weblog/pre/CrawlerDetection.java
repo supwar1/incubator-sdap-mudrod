@@ -143,23 +143,33 @@ public class CrawlerDetection extends LogAbstract {
 		Pattern pattern = Pattern.compile("get (.*?) http/*");
 		Matcher matcher;
 
-		BoolQueryBuilder filterSearch = new BoolQueryBuilder();
-		filterSearch.must(QueryBuilders.termQuery("IP", user));
+		BoolQueryBuilder AccessFilterSearch = new BoolQueryBuilder();
+		AccessFilterSearch.must(QueryBuilders.termQuery("IP", user));
+		
+		// cause error after adding the condition below.
+		// It filtered out everything
+//		AccessFilterSearch.must(QueryBuilders.termQuery("LogType", MudrodConstants.ACCESS_LOG));
 
 		AggregationBuilder aggregation = AggregationBuilders.dateHistogram("by_minute").field("Time")
 				.dateHistogramInterval(DateHistogramInterval.MINUTE).order(Order.COUNT_DESC);
 		SearchResponse checkRobot = es.getClient().prepareSearch(logIndex).setTypes(httpType, ftpType)
-				.setQuery(filterSearch).setSize(0).addAggregation(aggregation).execute().actionGet();
+				.setQuery(AccessFilterSearch).setSize(0).addAggregation(aggregation).execute().actionGet();
 
 		Histogram agg = checkRobot.getAggregations().get("by_minute");
 
 		List<? extends Histogram.Bucket> botList = agg.getBuckets();
+		
+		// how can I get the type of log type here?
 		long maxCount = botList.get(0).getDocCount();
 		if (maxCount >= rate) {
 			return 0;
 		} else {
 			DateTime dt1 = null;
 			int toLast = 0;
+			
+		  BoolQueryBuilder filterSearch = new BoolQueryBuilder();
+		  filterSearch.must(QueryBuilders.termQuery("IP", user));
+		  
 			SearchResponse scrollResp = es.getClient().prepareSearch(logIndex).setTypes(httpType, ftpType)
 					.setScroll(new TimeValue(60000)).setQuery(filterSearch).setSize(100).execute().actionGet();
 			while (true) {
