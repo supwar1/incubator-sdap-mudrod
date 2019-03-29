@@ -358,20 +358,40 @@ public class SessionGenerator extends LogAbstract {
       deleteInvalid(es, user);
       return;
     }
-
-    BoolQueryBuilder filterCheck = new BoolQueryBuilder();
-    filterCheck.must(QueryBuilders.termQuery("IP", user)).must(QueryBuilders.termQuery("Referer", "-"));
-    SearchResponse checkReferer = es.getClient()
+    
+    
+    BoolQueryBuilder filterCheckTotal = new BoolQueryBuilder();
+    filterCheckTotal.must(QueryBuilders.termQuery("IP", user));
+    filterCheckTotal.must(QueryBuilders.termQuery("LogType", MudrodConstants.ACCESS_LOG));
+    
+    SearchResponse checkRefererTotal = es.getClient()
             .prepareSearch(logIndex)
             .setTypes(this.cleanupType)
             .setScroll(new TimeValue(60000))
-            .setQuery(filterCheck)
+            .setQuery(filterCheckTotal)
             .setSize(0)
             .execute()
             .actionGet();
 
-    long numInvalid = checkReferer.getHits().getTotalHits();
-    double invalidRate = (double)numInvalid / docCount;
+    long numTotal = checkRefererTotal.getHits().getTotalHits();
+    
+
+    BoolQueryBuilder filterCheckInvalid = new BoolQueryBuilder();
+    filterCheckInvalid.must(QueryBuilders.termQuery("IP", user)).must(QueryBuilders.termQuery("Referer", "-"));
+    filterCheckInvalid.must(QueryBuilders.termQuery("LogType", MudrodConstants.ACCESS_LOG));
+    
+    SearchResponse checkRefererInvalid = es.getClient()
+            .prepareSearch(logIndex)
+            .setTypes(this.cleanupType)
+            .setScroll(new TimeValue(60000))
+            .setQuery(filterCheckInvalid)
+            .setSize(0)
+            .execute()
+            .actionGet();
+
+    long numInvalid = checkRefererInvalid.getHits().getTotalHits();
+    
+    double invalidRate = (double)numInvalid / (double)numTotal;
 
     if (invalidRate >= 0.8) {
       deleteInvalid(es, user);

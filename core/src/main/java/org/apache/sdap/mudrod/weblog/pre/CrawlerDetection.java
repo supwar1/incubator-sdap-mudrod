@@ -106,7 +106,7 @@ public class CrawlerDetection extends LogAbstract {
 	public boolean checkKnownCrawler(String agent) {
 		String[] crawlers = props.getProperty(MudrodConstants.BLACK_LIST_AGENT).split(",");
 		for (int i = 0; i < crawlers.length; i++) {
-			if (agent.toLowerCase().contains(crawlers[i].trim()))
+			if (agent.toLowerCase().contains(crawlers[i].trim()) || agent.equals("-"))
 				return true;
 		}
 		return false;
@@ -146,9 +146,7 @@ public class CrawlerDetection extends LogAbstract {
 		BoolQueryBuilder AccessFilterSearch = new BoolQueryBuilder();
 		AccessFilterSearch.must(QueryBuilders.termQuery("IP", user));
 		
-		// cause error after adding the condition below.
-		// It filtered out everything
-//		AccessFilterSearch.must(QueryBuilders.termQuery("LogType", MudrodConstants.ACCESS_LOG));
+		AccessFilterSearch.must(QueryBuilders.termQuery("LogType", MudrodConstants.ACCESS_LOG)); 
 
 		AggregationBuilder aggregation = AggregationBuilders.dateHistogram("by_minute").field("Time")
 				.dateHistogramInterval(DateHistogramInterval.MINUTE).order(Order.COUNT_DESC);
@@ -159,7 +157,9 @@ public class CrawlerDetection extends LogAbstract {
 
 		List<? extends Histogram.Bucket> botList = agg.getBuckets();
 		
-		// how can I get the type of log type here?
+		// if one user doesn't have access log, return 0 
+		if (botList.isEmpty())
+		  return 0;
 		long maxCount = botList.get(0).getDocCount();
 		if (maxCount >= rate) {
 			return 0;
@@ -176,8 +176,6 @@ public class CrawlerDetection extends LogAbstract {
 				for (SearchHit hit : scrollResp.getHits().getHits()) {
 					Map<String, Object> result = hit.getSource();
 					String logtype = (String) result.get("LogType");
-
-					// ***
 
 					if (logtype.equals(MudrodConstants.ACCESS_LOG) || logtype.equals(MudrodConstants.THREDDS_LOG)
 							|| logtype.equals(MudrodConstants.OPENDAP_LOG)) {
