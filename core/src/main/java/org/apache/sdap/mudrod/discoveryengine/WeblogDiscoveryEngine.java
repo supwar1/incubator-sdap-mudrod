@@ -99,10 +99,10 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
   @Override
   public void preprocess() {
     
-    // session tree test only
     
+    // session tree test only
     Session session = new Session(this.props, this.es);
-    JsonObject json = session.getSessionDetail("log201902.gz", "cleanup.log", "200.137.65.100@1");
+    JsonObject json = session.getSessionDetail("log201902.gz", "cleanup.log", "126.29.36.34@1");
     System.out.println(json.toString());
     // copy print result to session.html line 72 then refresh the website
     
@@ -130,11 +130,10 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
       DiscoveryStepAbstract ss = new SessionStatistic(this.props, this.es, this.spark);
       ss.execute();
       
-      
+
       DiscoveryStepAbstract rr = new RemoveRawLog(this.props, this.es, this.spark);
       rr.execute();
       */
-      
       endTime = System.currentTimeMillis();
 
       LOG.info("Web log preprocessing for logs dated {} complete. Time elapsed {} seconds.", anInputList, (endTime - startTime) / 1000);
@@ -147,6 +146,7 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
     DiscoveryStepAbstract cg = new ClickStreamGenerator(this.props, this.es, this.spark);
     cg.execute();
     */
+    
     LOG.info("Web log preprocessing (user history and clickstream) complete.");
   }
 
