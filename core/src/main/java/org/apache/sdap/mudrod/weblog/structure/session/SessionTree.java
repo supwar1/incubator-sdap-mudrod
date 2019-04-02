@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ClassName: SessionTree Function: Convert request list in a session to a tree
@@ -56,6 +58,8 @@ public class SessionTree extends MudrodAbstract {
   private String sessionID;
   // cleanupType: session type in Elasticsearch
   private String cleanupType;
+  // list to store download dataset
+  private ArrayList<String> DownloadDatasetName;
 
   /**
    * Creates a new instance of SessionTree.
@@ -72,6 +76,7 @@ public class SessionTree extends MudrodAbstract {
     tmpnode = root;
     this.sessionID = sessionID;
     this.cleanupType = cleanupType;
+    DownloadDatasetName = new ArrayList<String>();
   }
 
   /**
@@ -89,6 +94,7 @@ public class SessionTree extends MudrodAbstract {
     tmpnode = root;
     this.sessionID = sessionID;
     this.cleanupType = cleanupType;
+    DownloadDatasetName = new ArrayList<String>();
   }
 
   /**
@@ -98,24 +104,32 @@ public class SessionTree extends MudrodAbstract {
    * @return session node
    */
   public SessionNode insert(SessionNode node) {
+    
     // begin with datasetlist
+    // if the coming node is not search log, throw it away
+    // if the coming node is search log, start insertion by setting binsert to true.
     if (MudrodConstants.SEARCH_MARKER.equals(node.getKey())) {
       this.binsert = true;
     }
     if (!this.binsert) {
       return null;
     }
-    // remove unrelated node
+    
+    // remove nodes that are not search log, not view log, and not download log
     if (!MudrodConstants.SEARCH_MARKER.equals(node.getKey()) &&
             !MudrodConstants.VIEW_MARKER.equals(node.getKey()) &&
-            !MudrodConstants.FTP_LOG.equals(node.getKey())) {
+            !MudrodConstants.FTP_LOG.equals(node.getKey()) &&
+            !MudrodConstants.THREDDS_LOG.equals(node.getKey()) &&
+            !MudrodConstants.OPENDAP_LOG.equals(node.getKey())) {
       return null;
     }
-    // remove dumplicated click
+    
+    // remove duplicate click(URL)
     if (node.getRequest().equals(tmpnode.getRequest())) {
       return null;
     }
-    // search insert node
+    
+    // search position to insert node
     SessionNode parentnode = this.searchParentNode(node);
     if (parentnode == null) {
       return null;
@@ -124,7 +138,8 @@ public class SessionTree extends MudrodAbstract {
     parentnode.addChildren(node);
 
     // record insert node
-    tmpnode = node;
+    if (node.logType.equals(MudrodConstants.ACCESS_LOG))
+      tmpnode = node;
     if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
       latestDatasetnode = node;
     }
@@ -158,15 +173,21 @@ public class SessionTree extends MudrodAbstract {
     JsonObject json = new JsonObject();
 
     json.addProperty("seq", node.getSeq());
-    if ("datasetlist".equals(node.getKey())) {
+    
+    if (MudrodConstants.SEARCH_MARKER.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/searching.png");
       json.addProperty("name", node.getRequest());
-    } else if ("dataset".equals(node.getKey())) {
+    } else if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/viewing.png");
       json.addProperty("name", node.getDatasetId());
-    } else if ("ftp".equals(node.getKey())) {
+    } else if (MudrodConstants.FTP_LOG.equals(node.getKey()) || MudrodConstants.OPENDAP_LOG.equals(node.getKey()) 
+        || MudrodConstants.THREDDS_LOG.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/downloading.png");
-      json.addProperty("name", node.getRequest());
+      if (MudrodConstants.OPENDAP_LOG.equals(node.getKey()) || MudrodConstants.THREDDS_LOG.equals(node.getKey())) {
+        json.addProperty("name", node.getDatasetId());
+      } else {
+        json.addProperty("name", node.getRequest());
+      }
     } else if ("root".equals(node.getKey())) {
       json.addProperty("name", "");
       json.addProperty("icon", "./resources/images/users.png");
@@ -212,9 +233,12 @@ public class SessionTree extends MudrodAbstract {
       }
 
       String dataset = viewnode.getDatasetId();
+      
+      // ***
       boolean download = false;
       for (SessionNode child : children) {
-        if ("ftp".equals(child.getKey())) {
+        String childRequest = child.getRequest();
+        if (MudrodConstants.FTP_LOG.equals(child.getKey())) {
           download = true;
           break;
         }
@@ -245,8 +269,9 @@ public class SessionTree extends MudrodAbstract {
   private SessionNode searchParentNode(SessionNode node) {
 
     String nodeKey = node.getKey();
-
-    if ("datasetlist".equals(nodeKey)) {
+    
+    // if it is a search log
+    if (MudrodConstants.SEARCH_MARKER.equals(nodeKey)) {
       if ("-".equals(node.getReferer())) {
         return root;
       } else {
@@ -257,18 +282,161 @@ public class SessionTree extends MudrodAbstract {
           return tmp;
         }
       }
-    } else if ("dataset".equals(nodeKey)) {
+      // if it is a view log
+    } else if (MudrodConstants.VIEW_MARKER.equals(nodeKey)) {
       if ("-".equals(node.getReferer())) {
+        // view log cannot be sub-root log
         return null;
       } else {
         return this.findLatestRefer(tmpnode, node.getReferer());
       }
-    } else if ("ftp".equals(nodeKey)) {
+    } else if (MudrodConstants.FTP_LOG.equals(nodeKey)) {
       return latestDatasetnode;
+    } else if (MudrodConstants.THREDDS_LOG.equals(nodeKey) || MudrodConstants.OPENDAP_LOG.equals(nodeKey)) {
+      if ("-".equals(node.getReferer())) {
+        return null;
+      } else {
+        
+        String datasetName = downloadCheck(node);
+        
+        if (datasetName != null) {
+          boolean contain = false;
+          for (int i = 0; i < DownloadDatasetName.size(); i++) {
+            if (DownloadDatasetName.get(i).equals(datasetName)) {
+              contain = true;
+              break;
+            }
+          }
+          if (!contain) {
+            // set dataset Id to dataset name and show it in html
+            node.datasetId = datasetName;
+            DownloadDatasetName.add(datasetName);
+            return latestDatasetnode;
+          }
+          
+          /*
+           * strict version for download detection
+          boolean find = false; // find match in opendap log
+          if (node.logType.equals(MudrodConstants.OPENDAP_LOG)) {
+            Pattern pattern;
+            Matcher matcher;
+            if (tmp.contains("?")) {
+              pattern = Pattern.compile(".+/(.+)" + tmp.replace(".", "\\.").replace("?", "\\?") + ".*$");
+            } else {
+              pattern = Pattern.compile(".+/(.+)(\\..+)+$");
+            }
+            matcher = pattern.matcher(request);
+            while (matcher.find()) {
+              datasetName = matcher.group(1);
+              find = true;
+            }
+          } else if (node.logType.equals(MudrodConstants.THREDDS_LOG)) {
+            datasetName = tmp;
+          }
+          
+          if (find || node.logType.equals(MudrodConstants.THREDDS_LOG)) {
+            boolean contain = false;
+            for (int i = 0; i < DownloadDatasetName.size(); i++) {
+              if (DownloadDatasetName.get(i).equals(datasetName)) {
+                contain = true;
+                break;
+              }
+            }
+            if (!contain) {
+              // set dataset Id to dataset name and show it in html
+              node.datasetId = datasetName;
+              DownloadDatasetName.add(datasetName);
+              return latestDatasetnode;
+            }
+          }
+          */
+        }
+        // -1. check if referer is "-", if so, return null
+        // 0. check if it is a download log
+        // 1. extract the dataset "ID"
+        // 2. if the arraylist already has that ID, do nothing
+        // 3. if not add it into arraylist, connect to latestDatasetNode
+        // not consider its referer any more if referer != "-"
+      }
     }
-
-    return tmpnode;
+    
+    return null;
+    // why return tempnode???
+//    return tmpnode;
   }
+  
+  /**
+   *  check if given opendap or thredds log belongs to download logs
+   *  @param node:  {@link SessionNode}
+   *  @return dataset name if the given log node is download log
+   *          null        otherwise
+   */
+  private String downloadCheck(SessionNode node) {
+    String request = node.getRequest();
+    if (node.logType.equals(MudrodConstants.OPENDAP_LOG)) {
+      
+      if (request.endsWith("contents.html") || request.endsWith("/") || !request.contains(".nc")) {
+        return null;
+      } else {
+        Pattern pattern;
+        Matcher matcher;
+        String tmp = "";
+        // left suffix of download file name
+        pattern = Pattern.compile(".*/(.*)$");
+        
+        matcher = pattern.matcher(request);
+        
+        while (matcher.find()) {
+           tmp = matcher.group(1);
+           return tmp.split(".nc")[0];
+        }
+        
+        
+        
+        
+      }
+      
+      
+      /*
+       * strict verison
+       * It will return suffix for further check
+      if (request.endsWith(".html") || request.endsWith("/")) {
+        return null;
+      } else {
+        if (request.endsWith(".nc") || request.endsWith(".nc4") || request.endsWith(".dods") 
+            || request.endsWith(".ascii") || request.endsWith(".html")) {
+          String[] tmp = request.split(".");
+          String suffix = "." + tmp[tmp.length - 1];
+          return suffix;
+        } else  {
+          if (request.contains(".nc?")) {
+            return ".nc?";
+          } else if (request.endsWith(".nc4?")) {
+            return ".nc4?";
+          } else if (request.endsWith(".dods?")) {
+            return ".dods?";
+          } else if (request.endsWith(".ascii?")) {
+            return ".ascii?";
+          }
+        } 
+      }
+      */
+    } else if (node.logType.equals(MudrodConstants.THREDDS_LOG)) {
+      
+      Pattern pattern;
+      Matcher matcher;
+      pattern = Pattern.compile(".*\\.html\\?dataset=(.*)");
+      
+      matcher = pattern.matcher(request);
+      
+      while (matcher.find()) {
+         return matcher.group(1);
+      }
+    }
+    
+    return null;
+  }
+  
 
   /**
    * findLatestRefer: Find parent node whose visiting url is equal to the refer
@@ -280,14 +448,19 @@ public class SessionTree extends MudrodAbstract {
    */
   private SessionNode findLatestRefer(SessionNode node, String refer) {
     while (true) {
+      
       if ("root".equals(node.getKey())) {
         return null;
       }
+      
+      // bottom-up search
       SessionNode parentNode = node.getParent();
       if (refer.equals(parentNode.getRequest())) {
         return parentNode;
+      } else if (refer.equals(node.getRequest())) {
+        return node;
       }
-
+      // add one more check here since it is always seen that the new node would connect to the previous node
       SessionNode tmp = this.iterChild(parentNode, refer);
       if (tmp == null) {
         node = parentNode;
@@ -297,6 +470,9 @@ public class SessionTree extends MudrodAbstract {
       }
     }
   }
+  
+
+  
 
   /**
    * iterChild:
@@ -316,7 +492,7 @@ public class SessionTree extends MudrodAbstract {
           continue;
         }
       } else {
-        iterChild(tmp, refer);
+        return iterChild(tmp, refer);
       }
     }
 

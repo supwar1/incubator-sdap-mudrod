@@ -159,7 +159,6 @@ public class SessionStatistic extends LogAbstract {
 
     int sessionCount = 0;
     
-    // http or https
     Pattern pattern = Pattern.compile("get (.*?) http/*");
 
     StatsAggregationBuilder statsAgg = AggregationBuilders.stats("Stats").field("Time");
@@ -186,7 +185,7 @@ public class SessionStatistic extends LogAbstract {
     int searchDataListRequestCount = 0;
     int searchDataRequestCount = 0;
     int searchDataListRequestByKeywordsCount = 0;
-    int ftpRequestCount = 0;
+    int downloadRequestCount = 0;
     int keywordsNum = 0;
 
     String iP = null;
@@ -210,6 +209,8 @@ public class SessionStatistic extends LogAbstract {
         String logType = (String) result.get("LogType");
         iP = (String) result.get("IP");
         Matcher matcher = pattern.matcher(request.trim().toLowerCase());
+        
+        // why use while loop?
         while (matcher.find()) {
           request = matcher.group(1);
         }
@@ -276,8 +277,8 @@ public class SessionStatistic extends LogAbstract {
               views = views + "," + view;
           }
         }
-        if (MudrodConstants.FTP_LOG.equals(logType)) {
-          ftpRequestCount++;
+        if (!MudrodConstants.ACCESS_LOG.equals(logType)) {
+          
           String download = "";
           String requestLowercase = request.toLowerCase();
           if (!requestLowercase.endsWith(".jpg") && 
@@ -285,6 +286,7 @@ public class SessionStatistic extends LogAbstract {
                   !requestLowercase.endsWith(".txt") && 
                   !requestLowercase.endsWith(".gif")) {
             download = request;
+            downloadRequestCount++;
           }
 
           if ("".equals(downloads)) {
@@ -312,12 +314,12 @@ public class SessionStatistic extends LogAbstract {
     if (!"".equals(keywords)) {
       keywordsNum = keywords.split(",").length;
     }
-
+    
     if (searchDataListRequestCount != 0 && 
             searchDataListRequestCount <= Integer.parseInt(props.getProperty(MudrodConstants.SEARCH_F)) && 
             searchDataRequestCount != 0 && 
             searchDataRequestCount <= Integer.parseInt(props.getProperty(MudrodConstants.VIEW_F)) && 
-            ftpRequestCount <= Integer.parseInt(props.getProperty(MudrodConstants.DOWNLOAD_F))) 
+            downloadRequestCount <= Integer.parseInt(props.getProperty(MudrodConstants.DOWNLOAD_F))) 
     {
       String sessionURL = props.getProperty(
               MudrodConstants.SESSION_PORT)

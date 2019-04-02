@@ -400,7 +400,6 @@ public class SessionExtractor implements Serializable {
 
     List<RankingTrainData> queryList = this.extractRankingTrainData(props, es);
     return spark.sc.parallelize(queryList);
-
   }
 
   /**

@@ -70,6 +70,7 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
 
     this.props = props;
     this.es = es;
+    
   }
 
   /**
@@ -162,8 +163,9 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
       JsonObject jsonTree = tree.treeToJson(tree.root);
       sessionResults.add("treeData", jsonTree);
 
-      jsonRequest = this.getRequests(type, sessionID);
-      sessionResults.add("RequestList", jsonRequest);
+      // comment out for debug
+//       jsonRequest = this.getRequests(type, sessionID);
+//       sessionResults.add("RequestList", jsonRequest);
     } catch (UnsupportedEncodingException e) {
       LOG.error("Encoding error detected.", e);
 
@@ -216,7 +218,8 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
       String time = (String) result.get("Time");
       String logType = (String) result.get("LogType");
       String referer = (String) result.get("Referer");
-
+      
+      // order the sesion logs by time in advance
       SessionNode node = new SessionNode(props, request, logType, referer, time, seq);
       tree.insert(node);
       seq++;
@@ -234,9 +237,10 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
    * @throws UnsupportedEncodingException UnsupportedEncodingException
    */
   private JsonElement getRequests(String cleanuptype, String sessionID) throws UnsupportedEncodingException {
-    SearchResponse response = es.getClient().prepareSearch(props.getProperty(MudrodConstants.ES_INDEX_NAME)).setTypes(cleanuptype).setQuery(QueryBuilders.termQuery("SessionID", sessionID)).setSize(100)
-        .addSort("Time", SortOrder.ASC).execute().actionGet();
-
+    SearchResponse response = es.getClient().prepareSearch(/*props.getProperty(MudrodConstants.ES_INDEX_NAME)*/"log201902.gz")
+        .setTypes(cleanuptype).setQuery(QueryBuilders.termQuery("SessionID", sessionID))
+        .setSize(100).addSort("Time", SortOrder.ASC).execute().actionGet();
+    
     Gson gson = new Gson();
     List<JsonObject> requestList = new ArrayList<>();
     int seq = 1;

@@ -75,7 +75,7 @@ public class SessionNode {
     this.time = time;
     this.seq = seq;
     this.setRequest(request);
-    // this.setReferer(referer, props.getProperty(MudrodConstants.BASE_URL));
+    this.setReferer(referer, props);
     this.setKey(props, request, logType);
   }
 
@@ -84,12 +84,27 @@ public class SessionNode {
    *
    * @param referer previous request url
    */
-  public void setReferer(String referer, String basicUrl) {
+  
+  public void setReferer(String referer, Properties props) {
     if (referer == null) {
+      // if set "" here, may cause issue when call referer's method - nullpointerexception
       this.referer = "";
       return;
     }
-	this.referer= referer.toLowerCase().replace(basicUrl, "");
+    
+    // cut basic url by splitting request
+    String[] tmp = referer.split("jpl.nasa.gov");
+    if (tmp.length == 2) {
+      this.referer = tmp[1];
+    } else if (tmp.length > 2) {
+      for (int i = 1; i < tmp.length; i++) {
+        this.referer += tmp[i];
+      }
+    } else {
+      this.referer = "";
+    }
+    
+    this.referer = this.referer.toLowerCase();
   }
 
   /**
@@ -99,7 +114,7 @@ public class SessionNode {
    */
   public void setRequest(String req) {
     this.request = req;
-    if (this.logType.equals(MudrodConstants.HTTP_LOG)) {
+    if (!MudrodConstants.FTP_LOG.equals(this.logType)) {
       this.parseRequest(req);
     }
   }
@@ -139,6 +154,7 @@ public class SessionNode {
   public String getId() {
     return this.id;
   }
+ 
 
   /**
    * bSame:Compare this node with another node
@@ -155,8 +171,8 @@ public class SessionNode {
   }
 
   /**
-   * setKey:Set request type which contains three categories -
-   * dataset,datasetlist,ftp
+   * setKey:Set request type which contains five categories -
+   * dataset, datasetlist, ftp, thredds, opendap
    *
    * @param request request url
    * @param logType url type
@@ -165,8 +181,12 @@ public class SessionNode {
     this.key = "";
     String datasetlist = props.getProperty(MudrodConstants.SEARCH_MARKER);
     String dataset = props.getProperty(MudrodConstants.VIEW_MARKER);
-    if (logType.equals("ftp")) {
-      this.key = "ftp";
+    if (logType.equals(MudrodConstants.FTP_LOG)) {
+      this.key = MudrodConstants.FTP_LOG;
+    } else if (logType.equals(MudrodConstants.THREDDS_LOG)) {
+      this.key = MudrodConstants.THREDDS_LOG;
+    } else if (logType.equals(MudrodConstants.OPENDAP_LOG)) {
+      this.key = MudrodConstants.OPENDAP_LOG;
     } else if (logType.equals("root")) {
       this.key = "root";
     } else {
@@ -292,10 +312,10 @@ public class SessionNode {
     while (matcher.find()) {
       request = matcher.group(1);
     }
-    if (request.contains("/dataset/")) {
+    if (MudrodConstants.ACCESS_LOG.equals(this.logType) && request.contains("/dataset/")) {
       this.parseDatasetId(request);
     }
-
+    
     this.request = request.toLowerCase();
   }
 

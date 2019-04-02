@@ -23,8 +23,11 @@ import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.pre.*;
 import org.apache.sdap.mudrod.weblog.process.ClickStreamAnalyzer;
 import org.apache.sdap.mudrod.weblog.process.UserHistoryAnalyzer;
+import org.apache.sdap.mudrod.weblog.structure.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,6 +98,15 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
    */
   @Override
   public void preprocess() {
+    
+    // session tree test only
+    
+    Session session = new Session(this.props, this.es);
+    JsonObject json = session.getSessionDetail("log201902.gz", "cleanup.log", "200.137.65.100@1");
+    System.out.println(json.toString());
+    // copy print result to session.html line 72 then refresh the website
+    
+    
     LOG.info("Starting Web log preprocessing.");
 
     ArrayList<String> inputList = (ArrayList<String>) getFileList(props.getProperty(MudrodConstants.DATA_DIR));
@@ -105,7 +117,7 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
       startTime = System.currentTimeMillis();
       LOG.info("Processing logs dated {}", anInputList);
       
-      
+      /*
       DiscoveryStepAbstract im = new ImportLogFile(this.props, this.es, this.spark);
       im.execute();
       
@@ -115,7 +127,6 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
       SessionGenerator sg = new SessionGenerator(this.props, this.es, this.spark);
       sg.execute();
       
-      /*
       DiscoveryStepAbstract ss = new SessionStatistic(this.props, this.es, this.spark);
       ss.execute();
       
@@ -123,17 +134,19 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
       DiscoveryStepAbstract rr = new RemoveRawLog(this.props, this.es, this.spark);
       rr.execute();
       */
+      
       endTime = System.currentTimeMillis();
 
       LOG.info("Web log preprocessing for logs dated {} complete. Time elapsed {} seconds.", anInputList, (endTime - startTime) / 1000);
     }
-
-    /*DiscoveryStepAbstract hg = new HistoryGenerator(this.props, this.es, this.spark);
+    
+    /*
+    DiscoveryStepAbstract hg = new HistoryGenerator(this.props, this.es, this.spark);
     hg.execute();
 
     DiscoveryStepAbstract cg = new ClickStreamGenerator(this.props, this.es, this.spark);
-    cg.execute();*/
-
+    cg.execute();
+    */
     LOG.info("Web log preprocessing (user history and clickstream) complete.");
   }
 
