@@ -160,10 +160,18 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
     JsonElement jsonRequest = null;
     try {
       tree = this.getSessionTree(indexName, type, sessionID);
+
       JsonObject jsonTree = tree.treeToJson(tree.root);
       sessionResults.add("treeData", jsonTree);
-
-      // comment out for debug
+      
+      // only for test
+      /*
+      List<ClickStream> list = tree.getClickStreamList(props);
+      for (ClickStream cs: list) {
+        System.out.println(cs.toJson());
+      }
+      */
+      // comment out for test
 //       jsonRequest = this.getRequests(type, sessionID);
 //       sessionResults.add("RequestList", jsonRequest);
     } catch (UnsupportedEncodingException e) {

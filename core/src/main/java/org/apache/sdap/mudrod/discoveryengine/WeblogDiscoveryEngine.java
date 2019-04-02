@@ -99,13 +99,13 @@ public class WeblogDiscoveryEngine extends DiscoveryEngineAbstract {
   @Override
   public void preprocess() {
     
-    
-    // session tree test only
+    /*
+    // session tree test and click stream generator test only
     Session session = new Session(this.props, this.es);
-    JsonObject json = session.getSessionDetail("log201902.gz", "cleanup.log", "126.29.36.34@1");
+    JsonObject json = session.getSessionDetail("log201902.gz", "cleanup.log", "200.137.65.100@1");
     System.out.println(json.toString());
     // copy print result to session.html line 72 then refresh the website
-    
+    */
     
     LOG.info("Starting Web log preprocessing.");
 
