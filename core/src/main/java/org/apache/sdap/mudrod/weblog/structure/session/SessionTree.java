@@ -237,8 +237,10 @@ public class SessionTree extends MudrodAbstract {
       // ***
       boolean download = false;
       for (SessionNode child : children) {
-        String childRequest = child.getRequest();
-        if (MudrodConstants.FTP_LOG.equals(child.getKey())) {
+        // never used
+//        String childRequest = child.getRequest();
+        if (MudrodConstants.FTP_LOG.equals(child.getKey()) || MudrodConstants.OPENDAP_LOG.equals(child.getKey())
+            || MudrodConstants.THREDDS_LOG.equals(child.getKey())) {
           download = true;
           break;
         }
@@ -390,10 +392,6 @@ public class SessionTree extends MudrodAbstract {
            tmp = matcher.group(1);
            return tmp.split(".nc")[0];
         }
-        
-        
-        
-        
       }
       
       
