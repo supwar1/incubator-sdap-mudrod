@@ -86,7 +86,20 @@ public class SessionNode {
       this.referer = "";
       return;
     }
-	this.referer= referer.toLowerCase().replace(basicUrl, "");
+    
+    // cut basic url by splitting request
+    String[] tmp = referer.split("jpl.nasa.gov");
+    if (tmp.length == 2) {
+      this.referer = tmp[1];
+    } else if (tmp.length > 2) {
+      for (int i = 1; i < tmp.length; i++) {
+        this.referer += tmp[i];
+      }
+    } else {
+      this.referer = "";
+    }
+    
+    this.referer = this.referer.toLowerCase();
   }
 
   /**
@@ -162,8 +175,8 @@ public class SessionNode {
     this.key = "";
     String datasetlist = props.getProperty(MudrodConstants.SEARCH_MARKER);
     String dataset = props.getProperty(MudrodConstants.VIEW_MARKER);
-    if (logType.equals("ftp")) {
-      this.key = "ftp";
+    if (logType.equals(MudrodConstants.FTP_LOG)) {
+      this.key = MudrodConstants.FTP_LOG;
     } else if (logType.equals("root")) {
       this.key = "root";
     } else {

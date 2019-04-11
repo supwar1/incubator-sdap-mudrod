@@ -148,12 +148,14 @@ public class SessionTree extends MudrodAbstract {
    */
   public void printTree(SessionNode node) {
     LOG.info("node: {} \n", node.getRequest());
+    
     if (!node.children.isEmpty()) {
       for (int i = 0; i < node.children.size(); i++) {
         printTree(node.children.get(i));
       }
     }
   }
+
 
   /**
    * TreeToJson: Convert the session tree to Json object
@@ -166,13 +168,13 @@ public class SessionTree extends MudrodAbstract {
     JsonObject json = new JsonObject();
 
     json.addProperty("seq", node.getSeq());
-    if ("datasetlist".equals(node.getKey())) {
+    if (MudrodConstants.SEARCH_MARKER.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/searching.png");
       json.addProperty("name", node.getRequest());
-    } else if ("dataset".equals(node.getKey())) {
+    } else if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/viewing.png");
       json.addProperty("name", node.getDatasetId());
-    } else if ("ftp".equals(node.getKey())) {
+    } else if (MudrodConstants.FTP_LOG.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/downloading.png");
       json.addProperty("name", node.getRequest());
     } else if ("root".equals(node.getKey())) {
@@ -254,7 +256,7 @@ public class SessionTree extends MudrodAbstract {
 
     String nodeKey = node.getKey();
 
-    if ("datasetlist".equals(nodeKey)) {
+    if (MudrodConstants.SEARCH_MARKER.equals(nodeKey)) {
       if ("-".equals(node.getReferer())) {
         return root;
       } else {
@@ -265,13 +267,13 @@ public class SessionTree extends MudrodAbstract {
           return tmp;
         }
       }
-    } else if ("dataset".equals(nodeKey)) {
+    } else if (MudrodConstants.VIEW_MARKER.equals(nodeKey)) {
       if ("-".equals(node.getReferer())) {
         return null;
       } else {
         return this.findLatestRefer(tmpnode, node.getReferer());
       }
-    } else if ("ftp".equals(nodeKey)) {
+    } else if (MudrodConstants.FTP_LOG.equals(nodeKey)) {
       return latestDatasetnode;
     }
 
@@ -294,6 +296,8 @@ public class SessionTree extends MudrodAbstract {
       SessionNode parentNode = node.getParent();
       if (refer.equals(parentNode.getRequest())) {
         return parentNode;
+      } else if (refer.equals(node.getRequest())) {
+        return node;
       }
 
       SessionNode tmp = this.iterChild(parentNode, refer);
@@ -324,7 +328,7 @@ public class SessionTree extends MudrodAbstract {
           continue;
         }
       } else {
-        iterChild(tmp, refer);
+        return iterChild(tmp, refer);
       }
     }
 

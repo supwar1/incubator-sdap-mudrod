@@ -97,7 +97,7 @@ public class ApacheAccessLog extends WebLog implements Serializable {
         String[] searchPageTypes = props.getProperty(MudrodConstants.WHILE_LIST_REQUEST).split(",");
         boolean bContain = false;
         for (String searchType : searchPageTypes) {
-          if (request.contains(searchType)) {
+          if (request.contains(searchType.trim())) {
             bContain = true;
             break;
           }
@@ -155,10 +155,12 @@ public class ApacheAccessLog extends WebLog implements Serializable {
     Matcher matcher;
     matcher = pattern.matcher(request.trim().toLowerCase());
     while (matcher.find()) {
-      request = matcher.group(1);
-      return baseUrl + request;
+      
+//      request = matcher.group(1);
+//      return baseUrl + request;
+      return matcher.group(1);
     }
 
-    return request;
+    return null;
   }
 }

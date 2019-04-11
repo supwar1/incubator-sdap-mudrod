@@ -88,4 +88,13 @@ public class WebLog implements Serializable {
     }
     return true;
   }
+  
+  @Override
+  public boolean equals(Object log) {
+    WebLog tmp = (WebLog) log;
+    if (this.IP.equals(tmp.IP) && this.Request.equals(tmp.Request)) {
+      return true;
+    }
+    return false;
+  }
 }

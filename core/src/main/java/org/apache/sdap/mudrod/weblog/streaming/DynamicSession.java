@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.sdap.mudrod.driver.ESDriver;
 import org.apache.sdap.mudrod.main.MudrodConstants;
 import org.apache.sdap.mudrod.weblog.structure.log.ApacheAccessLog;
 import org.apache.sdap.mudrod.weblog.structure.log.RequestUrl;
@@ -25,6 +26,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import com.clearspring.analytics.stream.membership.Filter;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 public class DynamicSession implements Serializable {
 
@@ -34,19 +37,54 @@ public class DynamicSession implements Serializable {
   private String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.sss'Z'";
   private List<WebLog> logList = new LinkedList<>();
   private SessionTree tree = null;
+  private Properties props;
   
-  public DynamicSession(WebLog log) {
+  public DynamicSession(WebLog log, Properties props) {
     this.start_time = log.getTime();
     this.end_time = log.getTime();
     this.ip = log.getIP();
     this.logList.add(log);
+    this.props = props;
+    
+    this.tree = new SessionTree(props, null, this.ip, "dynamic");
+    
+    String request = log.getRequest();
+    String time = log.getTime();
+    String logType = log.getLogType();
+    String referer = "";
+    if(logType.equals(MudrodConstants.HTTP_LOG)){
+       referer = ((ApacheAccessLog)log).getReferer();
+       request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+    }
+    
+    SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
+    if (MudrodConstants.SEARCH_MARKER.equals(node.getKey()))
+      this.tree.insert(node);
   }
 
-  public DynamicSession(String start_time, String end_time, String ip, List<WebLog> list) {
+  public DynamicSession(String start_time, String end_time, String ip, List<WebLog> list, Properties props) {
     this.start_time = start_time;
     this.end_time = end_time;
     this.ip = ip;
     this.logList = list;
+    this.props = props;
+    
+    this.tree = new SessionTree(props, null, this.ip, "dynamic");
+    
+    for (WebLog log: list) {
+      String request = log.getRequest();
+      String time = log.getTime();
+      String logType = log.getLogType();
+      String referer = "";
+      if(logType.equals(MudrodConstants.HTTP_LOG)){
+         referer = ((ApacheAccessLog)log).getReferer();
+         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+      }
+      
+      SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
+      if (MudrodConstants.SEARCH_MARKER.equals(node.getKey()))
+        this.tree.insert(node);
+    }
   }
 
   public String getStartTime() {
@@ -91,6 +129,15 @@ public class DynamicSession implements Serializable {
   }
 
   public static DynamicSession add(DynamicSession s1, DynamicSession s2) {
+    // test
+    System.out.print("*Reduce state ");
+    if (s1 != null) {
+      System.out.print(s1.getIpAddress() + " ");
+    }
+    if (s2 != null) {
+      System.out.println(s2.getIpAddress());
+    }
+    
     DynamicSession s = null;
     if (s1 == null && s2 != null) {
       s = s2;
@@ -114,11 +161,33 @@ public class DynamicSession implements Serializable {
       new_logList.addAll(s1.getLogList());
       new_logList.addAll(s2.getLogList());
 
-      s = new DynamicSession(new_start_time.toString(formatter), new_end_time.toString(formatter), s2.getIpAddress(), new_logList);
+      s = new DynamicSession(new_start_time.toString(formatter), new_end_time.toString(formatter), s2.getIpAddress(), new_logList, s1.props);
     }
 
     return s;
   }
+  
+  public void incorporate(DynamicSession newSession) {
+    // why consider time stamp? they come in order
+    // check ip?
+    for (WebLog log: newSession.getLogList()) {
+      this.logList.add(log);
+      String request = log.getRequest();
+      String time = log.getTime();
+      String logType = log.getLogType();
+      String referer = "";
+      if(logType.equals(MudrodConstants.HTTP_LOG)){
+         referer = ((ApacheAccessLog)log).getReferer();
+         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+      }
+      
+      SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
+      this.tree.insert(node);
+
+    }
+  }
+  
+  
 
   public boolean hasHttpLog() {
     boolean hasHttp = false;
@@ -265,5 +334,22 @@ public class DynamicSession implements Serializable {
     }
     
     return trainDatas;
+  }
+  
+  public JsonObject getSessionDetail() {
+    JsonObject sessionResults = new JsonObject();
+    // for session tree
+
+    JsonObject jsonTree = this.tree.treeToJson(this.tree.getRoot());
+    sessionResults.add("treeData", jsonTree);
+
+    return sessionResults;
+  }
+  
+  
+  // test only
+  public void printSessionTree() {
+    this.tree.printTree(this.tree.getRoot());
+    System.out.println(this.getSessionDetail());
   }
 }
