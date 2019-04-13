@@ -39,7 +39,7 @@ import org.joda.time.Seconds;
  */
 public class LogMonitor {
   private static Properties props;
-  private static final Duration SLIDE_INTERVAL = new Duration(3 * 1000);
+  private static final Duration SLIDE_INTERVAL = new Duration(4 * 1000);
   private static final int interval_timeout = 300;
   private static final int session_maxinum_timeout = 600;
   
@@ -53,8 +53,7 @@ public class LogMonitor {
       int session_length = Seconds.secondsBetween(now, s.getStartTimeObj()).getSeconds();
       if (interval > interval_timeout || session_length > session_maxinum_timeout) {
           s = null;
-          
-          
+
           //System.out.println("h1");
       }
     } 
@@ -69,7 +68,6 @@ public class LogMonitor {
         s.incorporate(i);
       }
       
-      
       // test
       /*
       System.out.print("*Update state ");
@@ -81,6 +79,7 @@ public class LogMonitor {
       }
       */
     }
+    s.generateClickStream();
 
     if (s == null || !s.hasHttpLog()) {
       //System.out.println("h3");
@@ -103,7 +102,7 @@ public class LogMonitor {
     // A DStream of sessions with ip being the key
     JavaPairDStream<String, DynamicSession> ipDStream = usefulLogDStream.mapToPair(s -> new Tuple2<>(s.getIP(), new DynamicSession(s, props)))
         .reduceByKey(Session_Merger).updateStateByKey(COMPUTE_RUNNING_SESSION);
-    
+
     ipDStream.foreachRDD(rdd -> {
       //System.out.println("h5");
       List<Tuple2<String, DynamicSession>> sessions = rdd.take(100);
@@ -130,8 +129,11 @@ public class LogMonitor {
         
         t._2.parseLogs();
         
-        System.out.println("SessionTree:");
-        t._2.printSessionTree();
+//        System.out.println("SessionTree:");
+//        t._2.printSessionTree();
+        System.out.println("ClickStreams:");
+        t._2.printClickStream();
+        
         /*
         SessionTree tree = t._2.buildTree(props);
         //for test
@@ -157,7 +159,7 @@ public class LogMonitor {
       e.printStackTrace();
     }
   }
-
+  
   public static void main(String[] args) throws Exception {
    /* if (args.length == 0) {
       System.out.println("Must specify an access logs directory.");

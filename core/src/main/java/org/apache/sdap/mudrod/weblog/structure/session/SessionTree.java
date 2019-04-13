@@ -207,7 +207,8 @@ public class SessionTree extends MudrodAbstract {
     for (SessionNode viewnode : viewnodes) {
       SessionNode parent = viewnode.getParent();
       List<SessionNode> children = viewnode.getChildren();
-
+      
+      // if parent node is not a search node
       if (!MudrodConstants.SEARCH_MARKER.equals(parent.getKey())) {
         continue;
       }
@@ -224,7 +225,7 @@ public class SessionTree extends MudrodAbstract {
       String dataset = viewnode.getDatasetId();
       boolean download = false;
       for (SessionNode child : children) {
-        if ("ftp".equals(child.getKey())) {
+        if (MudrodConstants.FTP_LOG.equals(child.getKey())) {
           download = true;
           break;
         }

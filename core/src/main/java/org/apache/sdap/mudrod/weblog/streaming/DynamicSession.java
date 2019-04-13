@@ -39,6 +39,8 @@ public class DynamicSession implements Serializable {
   private SessionTree tree = null;
   private Properties props;
   
+  private List<ClickStream> clickStream;
+  
   public DynamicSession(WebLog log, Properties props) {
     this.start_time = log.getTime();
     this.end_time = log.getTime();
@@ -351,5 +353,15 @@ public class DynamicSession implements Serializable {
   public void printSessionTree() {
     this.tree.printTree(this.tree.getRoot());
     System.out.println(this.getSessionDetail());
+  }
+  
+  public void generateClickStream() {
+    clickStream = this.tree.getClickStreamList(props);
+  }
+  
+  public void printClickStream() {
+    for (int i = 0; i < clickStream.size(); i++) {
+      System.out.println(clickStream.get(i).toString());
+    }
   }
 }
