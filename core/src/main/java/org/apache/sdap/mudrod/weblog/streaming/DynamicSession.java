@@ -355,7 +355,7 @@ public class DynamicSession implements Serializable {
     System.out.println(this.getSessionDetail());
   }
   
-  public void generateClickStream() {
+  public void generateClickStream() throws UnsupportedEncodingException {
     clickStream = this.tree.getClickStreamList(props);
   }
   

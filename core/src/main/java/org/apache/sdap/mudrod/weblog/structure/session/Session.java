@@ -180,8 +180,9 @@ public class Session /*extends MudrodAbstract*/ implements Comparable<Session> {
    * @param sessionID:   Session ID
    * @return Click stram data list
    * {@link ClickStream}
+   * @throws UnsupportedEncodingException 
    */
-  public List<ClickStream> getClickStreamList(String indexName, String type, String sessionID) {
+  public List<ClickStream> getClickStreamList(String indexName, String type, String sessionID) throws UnsupportedEncodingException {
     SessionTree tree = null;
     try {
       tree = this.getSessionTree(indexName, type, sessionID);

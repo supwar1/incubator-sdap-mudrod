@@ -199,8 +199,9 @@ public class SessionTree extends MudrodAbstract {
    * getClickStreamList: Get click stream list in the session
    *
    * @return {@link ClickStream}
+   * @throws UnsupportedEncodingException 
    */
-  public List<ClickStream> getClickStreamList(Properties props) {
+  public List<ClickStream> getClickStreamList(Properties props) throws UnsupportedEncodingException {
 
     List<ClickStream> clickthroughs = new ArrayList<>();
     List<SessionNode> viewnodes = this.getViewNodes(this.root);
@@ -215,12 +216,18 @@ public class SessionTree extends MudrodAbstract {
 
       RequestUrl requestURL = new RequestUrl();
       String viewquery = "";
+      
+      /*
       try {
         String infoStr = requestURL.getSearchInfo(viewnode.getRequest());
         viewquery = es.customAnalyzing(props.getProperty(MudrodConstants.ES_INDEX_NAME), infoStr);
       } catch (UnsupportedEncodingException | InterruptedException | ExecutionException e) {
         LOG.warn("Exception getting search info. Ignoring...", e);
       }
+      */
+      
+      // get search info from search log instead of view log
+      viewquery = requestURL.getSearchInfo(parent.getRequest());
 
       String dataset = viewnode.getDatasetId();
       boolean download = false;

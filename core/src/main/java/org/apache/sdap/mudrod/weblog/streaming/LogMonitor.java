@@ -79,6 +79,7 @@ public class LogMonitor {
       }
       */
     }
+    
     s.generateClickStream();
 
     if (s == null || !s.hasHttpLog()) {
@@ -129,8 +130,9 @@ public class LogMonitor {
         
         t._2.parseLogs();
         
-//        System.out.println("SessionTree:");
-//        t._2.printSessionTree();
+        System.out.println("SessionTree:");
+        t._2.printSessionTree();
+        
         System.out.println("ClickStreams:");
         t._2.printClickStream();
         
