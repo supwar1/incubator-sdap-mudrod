@@ -641,11 +641,11 @@ public class SessionTree extends MudrodAbstract {
       LinkedHashMap<String, Boolean> datasetOpt = new LinkedHashMap<>();
       int ndownload = 0;
       for (SessionNode node : children) {
-        if ("dataset".equals(node.getKey())) {
+        if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
           Boolean bDownload = false;
           List<SessionNode> nodeChildren = node.getChildren();
           for (SessionNode aNodeChildren : nodeChildren) {
-            if ("ftp".equals(aNodeChildren.getKey())) {
+            if (MudrodConstants.FTP_LOG.equals(aNodeChildren.getKey())) {
               bDownload = true;
               ndownload += 1;
               break;
