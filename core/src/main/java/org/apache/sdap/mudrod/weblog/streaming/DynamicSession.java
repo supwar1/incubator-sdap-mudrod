@@ -15,6 +15,7 @@ import org.apache.sdap.mudrod.weblog.structure.log.ApacheAccessLog;
 import org.apache.sdap.mudrod.weblog.structure.log.RequestUrl;
 import org.apache.sdap.mudrod.weblog.structure.log.WebLog;
 import org.apache.sdap.mudrod.weblog.structure.session.ClickStream;
+import org.apache.sdap.mudrod.weblog.structure.session.RankingTrainData;
 import org.apache.sdap.mudrod.weblog.structure.session.SessionNode;
 import org.apache.sdap.mudrod.weblog.structure.session.SessionTree;
 import org.elasticsearch.action.search.SearchResponse;
@@ -40,6 +41,7 @@ public class DynamicSession implements Serializable {
   private Properties props;
   
   private List<ClickStream> clickStream;
+  private List<RankingTrainData> trainData;
   
   public DynamicSession(WebLog log, Properties props) {
     this.start_time = log.getTime();
@@ -364,4 +366,15 @@ public class DynamicSession implements Serializable {
       System.out.println(clickStream.get(i).toString());
     }
   }
+  
+  public void generateRankingTrainData() throws UnsupportedEncodingException {
+    this.trainData = this.tree.getRankingTrainData("dynamic");
+  }
+  
+  public void printRankingTrainData() {
+    for (int i = 0; i < trainData.size(); i++) {
+      System.out.println(trainData.get(i).toString());
+    }
+  }
+      
 }

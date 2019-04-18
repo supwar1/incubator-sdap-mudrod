@@ -80,7 +80,8 @@ public class LogMonitor {
       */
     }
     
-    s.generateClickStream();
+//    s.generateClickStream();
+    s.generateRankingTrainData();
 
     if (s == null || !s.hasHttpLog()) {
       //System.out.println("h3");
@@ -130,11 +131,14 @@ public class LogMonitor {
         
         t._2.parseLogs();
         
-        System.out.println("SessionTree:");
-        t._2.printSessionTree();
+//        System.out.println("SessionTree:");
+//        t._2.printSessionTree();
         
-        System.out.println("ClickStreams:");
-        t._2.printClickStream();
+//        System.out.println("ClickStreams:");
+//        t._2.printClickStream();
+        
+        System.out.println("RankingTrainData:");
+        t._2.printRankingTrainData();
         
         /*
         SessionTree tree = t._2.buildTree(props);

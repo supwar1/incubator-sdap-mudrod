@@ -467,4 +467,81 @@ public class SessionTree extends MudrodAbstract {
 
     return nodes;
   }
+  
+  /**
+   * Obtain the ranking training data.
+   *
+   * @param indexName   the index from whcih to obtain the data
+   * @return {@link ClickStream}
+   * @throws UnsupportedEncodingException if there is an error whilst
+   *                                      processing the ranking training data.
+   */
+  public List<RankingTrainData> getRankingTrainData(String indexName) throws UnsupportedEncodingException {
+
+    List<RankingTrainData> trainDatas = new ArrayList<>();
+   
+    List<SessionNode> queryNodes = this.getQueryNodes(this.root);
+    for (SessionNode querynode : queryNodes) {
+      List<SessionNode> children = querynode.getChildren();
+
+      LinkedHashMap<String, Boolean> datasetOpt = new LinkedHashMap<>();
+      int ndownload = 0;
+      for (SessionNode node : children) {
+        if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
+          Boolean bDownload = false;
+          List<SessionNode> nodeChildren = node.getChildren();
+          for (SessionNode aNodeChildren : nodeChildren) {
+            if (MudrodConstants.FTP_LOG.equals(aNodeChildren.getKey())) {
+              bDownload = true;
+              ndownload += 1;
+              break;
+            }
+          }
+          datasetOpt.put(node.datasetId, bDownload);
+        }
+      }
+      
+      // method 1: The priority of download data are higher
+      if (datasetOpt.size() > 1 && ndownload > 0) {
+        // query
+        RequestUrl requestURL = new RequestUrl();
+        String queryUrl = querynode.getRequest();
+        String infoStr = requestURL.getSearchInfo(queryUrl);
+        String query = null;
+        /*
+        try {
+          query = es.customAnalyzing(props.getProperty(MudrodConstants.ES_INDEX_NAME), infoStr);
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException("Error performing custom analyzing", e);
+        }
+        */
+        query = infoStr;
+        Map<String, String> filter = RequestUrl.getFilterInfo(queryUrl);
+
+        for (String datasetA : datasetOpt.keySet()) {
+          Boolean bDownloadA = datasetOpt.get(datasetA);
+          if (bDownloadA) {
+            for (String datasetB : datasetOpt.keySet()) {
+              Boolean bDownloadB = datasetOpt.get(datasetB);
+              if (!bDownloadB) {
+
+                String[] queries = query.split(",");
+                for (String query1 : queries) {
+                  RankingTrainData trainData = new RankingTrainData(query1, datasetA, datasetB);
+                  trainData.setSessionId(this.sessionID);
+                  trainData.setIndex(indexName);
+                  trainData.setFilter(filter);
+                  trainDatas.add(trainData);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return trainDatas;
+  }
+  
+  
 }
