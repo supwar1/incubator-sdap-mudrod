@@ -80,7 +80,7 @@ public class LogMonitor {
       */
     }
     
-//    s.generateClickStream();
+    s.generateClickStream();
     s.generateRankingTrainData();
 
     if (s == null || !s.hasHttpLog()) {
@@ -111,17 +111,17 @@ public class LogMonitor {
       for (Tuple2<String, DynamicSession> t : sessions) {
         
         List<WebLog> logs = t._2.getLogList();
-        int httpCount = 0;
-        int ftpCount = 0;
+        int accessCount = 0;
+        int downloadCount = 0;
         for (WebLog log : logs) {
-          if (log.getLogType().equals(MudrodConstants.HTTP_LOG)) {
-            httpCount += 1;
+          if (log.getLogType().equals(MudrodConstants.ACCESS_LOG)) {
+            accessCount += 1;
           } else {
-            ftpCount += 1;
+            downloadCount += 1;
           }
         }
         
-        System.out.println(t._1 + " " + httpCount + " http, " + ftpCount + " ftp");
+        System.out.println(t._1 + " " + accessCount + " access, " + downloadCount + " download");
         
         //for test
         System.out.println("original logs:");
@@ -131,11 +131,11 @@ public class LogMonitor {
         
         t._2.parseLogs();
         
-//        System.out.println("SessionTree:");
-//        t._2.printSessionTree();
+        System.out.println("SessionTree:");
+        t._2.printSessionTree();
         
-//        System.out.println("ClickStreams:");
-//        t._2.printClickStream();
+        System.out.println("ClickStreams:");
+        t._2.printClickStream();
         
         System.out.println("RankingTrainData:");
         t._2.printRankingTrainData();

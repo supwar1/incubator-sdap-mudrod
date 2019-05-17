@@ -54,24 +54,34 @@ public interface MudrodConstants {
 
   public static final String FTP_LOG = "ftp";
 
-  public static final String HTTP_PREFIX = "mudrod.http.prefix";
+//  public static final String HTTP_PREFIX = "mudrod.http.prefix";
 
-  public static final String HTTP_TYPE = "raw.http";
+//  public static final String HTTP_TYPE = "raw.http";
 
-  public static final String HTTP_LOG = "http";
+//  public static final String HTTP_LOG = "http";
+  
+  public static final String ACCESS_PREFIX = "mudrod.access.prefix";
 
-  public static final String BASE_URL = "mudrod.base.url";
+  public static final String ACCESS_LOG = "access";
+  
+  public static final String THREDDS_PREFIX = "mudrod.thredds.prefix";
+
+  public static final String THREDDS_LOG = "thredds";
+  
+  public static final String OPENDAP_PREFIX = "mudrod.opendap.prefix";
+
+  public static final String OPENDAP_LOG = "opendap";
+
+  public static final String ACCESS_URL = "mudrod.access.url";
+  
+  public static final String THREDDS_URL = "mudrod.thredds.url";
+  
+  public static final String OPENDAP_URL = "mudrod.opendap.url";
 
   public static final String BLACK_LIST_REQUEST = "mudrod.black.request.list";
 
   public static final String BLACK_LIST_AGENT = "mudrod.black.agent.list";
-  
-  public static final String WHILE_LIST_REQUEST = "mudrod.white.request.list";
-  
-  public static final String REQUEST_LIST_STRATEGY =  "mudrod.request.list.strategy";
-  
-  public static final String WHITE = "white";
-  
+
   public static final String LOG_INDEX = "mudrod.log.index";
 
   public static final String METADATA_LINKAGE_TYPE = "metadata.linkage";

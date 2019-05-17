@@ -116,7 +116,9 @@ public class SessionTree extends MudrodAbstract {
     // remove unrelated node
     if (!MudrodConstants.SEARCH_MARKER.equals(node.getKey()) &&
             !MudrodConstants.VIEW_MARKER.equals(node.getKey()) &&
-            !MudrodConstants.FTP_LOG.equals(node.getKey())) {
+            !MudrodConstants.FTP_LOG.equals(node.getKey()) &&
+            !MudrodConstants.THREDDS_LOG.equals(node.getKey()) &&
+            !MudrodConstants.OPENDAP_LOG.equals(node.getKey())) {
       return null;
     }
     // remove dumplicated click
@@ -132,7 +134,8 @@ public class SessionTree extends MudrodAbstract {
     parentnode.addChildren(node);
 
     // record insert node
-    tmpnode = node;
+    if (node.logType.equals(MudrodConstants.ACCESS_LOG))
+      tmpnode = node;
     if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
       latestDatasetnode = node;
     }
@@ -174,7 +177,9 @@ public class SessionTree extends MudrodAbstract {
     } else if (MudrodConstants.VIEW_MARKER.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/viewing.png");
       json.addProperty("name", node.getDatasetId());
-    } else if (MudrodConstants.FTP_LOG.equals(node.getKey())) {
+    } else if (MudrodConstants.FTP_LOG.equals(node.getKey()) || 
+        MudrodConstants.OPENDAP_LOG.equals(node.getKey()) || 
+        MudrodConstants.THREDDS_LOG.equals(node.getKey())) {
       json.addProperty("icon", "./resources/images/downloading.png");
       json.addProperty("name", node.getRequest());
     } else if ("root".equals(node.getKey())) {
@@ -232,7 +237,9 @@ public class SessionTree extends MudrodAbstract {
       String dataset = viewnode.getDatasetId();
       boolean download = false;
       for (SessionNode child : children) {
-        if (MudrodConstants.FTP_LOG.equals(child.getKey())) {
+        if (MudrodConstants.FTP_LOG.equals(child.getKey()) ||
+            MudrodConstants.OPENDAP_LOG.equals(child.getKey()) ||
+            MudrodConstants.THREDDS_LOG.equals(child.getKey())) {
           download = true;
           break;
         }
@@ -281,7 +288,9 @@ public class SessionTree extends MudrodAbstract {
       } else {
         return this.findLatestRefer(tmpnode, node.getReferer());
       }
-    } else if (MudrodConstants.FTP_LOG.equals(nodeKey)) {
+    } else if (MudrodConstants.FTP_LOG.equals(nodeKey) || 
+        MudrodConstants.OPENDAP_LOG.equals(nodeKey) ||
+        MudrodConstants.THREDDS_LOG.equals(nodeKey)) {
       return latestDatasetnode;
     }
 
@@ -479,7 +488,7 @@ public class SessionTree extends MudrodAbstract {
   public List<RankingTrainData> getRankingTrainData(String indexName) throws UnsupportedEncodingException {
 
     List<RankingTrainData> trainDatas = new ArrayList<>();
-   
+    
     List<SessionNode> queryNodes = this.getQueryNodes(this.root);
     for (SessionNode querynode : queryNodes) {
       List<SessionNode> children = querynode.getChildren();
@@ -491,7 +500,9 @@ public class SessionTree extends MudrodAbstract {
           Boolean bDownload = false;
           List<SessionNode> nodeChildren = node.getChildren();
           for (SessionNode aNodeChildren : nodeChildren) {
-            if (MudrodConstants.FTP_LOG.equals(aNodeChildren.getKey())) {
+            if (MudrodConstants.FTP_LOG.equals(aNodeChildren.getKey()) ||
+                MudrodConstants.OPENDAP_LOG.equals(aNodeChildren.getKey()) ||
+                MudrodConstants.THREDDS_LOG.equals(aNodeChildren.getKey())) {
               bDownload = true;
               ndownload += 1;
               break;

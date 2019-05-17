@@ -56,9 +56,9 @@ public class DynamicSession implements Serializable {
     String time = log.getTime();
     String logType = log.getLogType();
     String referer = "";
-    if(logType.equals(MudrodConstants.HTTP_LOG)){
+    if(logType.equals(MudrodConstants.ACCESS_LOG)){
        referer = ((ApacheAccessLog)log).getReferer();
-       request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+       request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.ACCESS_URL));
     }
     
     SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
@@ -80,9 +80,9 @@ public class DynamicSession implements Serializable {
       String time = log.getTime();
       String logType = log.getLogType();
       String referer = "";
-      if(logType.equals(MudrodConstants.HTTP_LOG)){
+      if(logType.equals(MudrodConstants.ACCESS_LOG)){
          referer = ((ApacheAccessLog)log).getReferer();
-         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.ACCESS_LOG));
       }
       
       SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
@@ -180,9 +180,9 @@ public class DynamicSession implements Serializable {
       String time = log.getTime();
       String logType = log.getLogType();
       String referer = "";
-      if(logType.equals(MudrodConstants.HTTP_LOG)){
+      if(logType.equals(MudrodConstants.ACCESS_LOG)){
          referer = ((ApacheAccessLog)log).getReferer();
-         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.ACCESS_URL));
       }
       
       SessionNode node = new SessionNode(props, request, logType, referer, time, 1);
@@ -196,7 +196,7 @@ public class DynamicSession implements Serializable {
   public boolean hasHttpLog() {
     boolean hasHttp = false;
     for (WebLog log : logList) {
-      if (log.getLogType().equals(MudrodConstants.HTTP_LOG)) {
+      if (log.getLogType().equals(MudrodConstants.ACCESS_LOG)) {
         hasHttp = true;
         break;
       }
@@ -207,7 +207,7 @@ public class DynamicSession implements Serializable {
   public void parseLogs() {
     RequestUrl requestURL = new RequestUrl();
     for (WebLog log : logList) {
-      if (log.getLogType().equals(MudrodConstants.HTTP_LOG)) {
+      if (log.getLogType().equals(MudrodConstants.ACCESS_LOG)) {
         String queryUrl = log.getRequest();
         if(queryUrl.contains("datasetlist")){
           String searchStr = requestURL.getSearchWord(queryUrl);
@@ -253,9 +253,9 @@ public class DynamicSession implements Serializable {
       String time = log.getTime();
       String logType = log.getLogType();
       String referer = "";
-      if(logType.equals(MudrodConstants.HTTP_LOG)){
+      if(logType.equals(MudrodConstants.ACCESS_LOG)){
          referer = ((ApacheAccessLog)log).getReferer();
-         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.BASE_URL));
+         request = ((ApacheAccessLog)log).parseUrl(request, props.getProperty(MudrodConstants.ACCESS_URL));
       }
       
       SessionNode node = new SessionNode(props, request, logType, referer, time, seq);
@@ -306,7 +306,7 @@ public class DynamicSession implements Serializable {
         List<SessionNode> dataChildren = datanode.getChildren();
         int childSize = dataChildren.size();
         for (int k = 0; k < childSize; k++) {
-          if ("ftp".equals(dataChildren.get(k).getKey())) {
+          if (MudrodConstants.FTP_LOG.equals(dataChildren.get(k).getKey())) {
             bDownload = true;
             break;
           }
@@ -376,5 +376,5 @@ public class DynamicSession implements Serializable {
       System.out.println(trainData.get(i).toString());
     }
   }
-      
+  
 }

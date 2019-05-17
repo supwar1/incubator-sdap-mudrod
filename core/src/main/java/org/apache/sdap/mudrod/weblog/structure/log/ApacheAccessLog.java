@@ -85,51 +85,70 @@ public class ApacheAccessLog extends WebLog implements Serializable {
     if ("-".equals(bytes)) {
       bytes = "0";
     }
-
+    String type = "";
+    if (matcher.group(5).contains("GET /opendap")) {
+      type = MudrodConstants.OPENDAP_LOG;
+    } else if (matcher.group(5).contains("GET /thredds")) {
+      type = MudrodConstants.THREDDS_LOG;
+    } else {
+      type = MudrodConstants.ACCESS_LOG;
+    }
     String request = matcher.group(5).toLowerCase();
     String agent = matcher.group(9);
     CrawlerDetection crawlerDe = new CrawlerDetection(props);
     if (crawlerDe.checkKnownCrawler(agent)) {
       return null;
     } else {
-
-      if (props.getProperty(MudrodConstants.REQUEST_LIST_STRATEGY).equals(MudrodConstants.WHITE)) {
-        String[] searchPageTypes = props.getProperty(MudrodConstants.WHILE_LIST_REQUEST).split(",");
-        boolean bContain = false;
-        for (String searchType : searchPageTypes) {
-          if (request.contains(searchType.trim())) {
-            bContain = true;
-            break;
-          }
-        }
-        if (!bContain) {
+      /*
+       * if (props.getProperty(MudrodConstants.REQUEST_LIST_STRATEGY).equals(
+       * MudrodConstants.WHITE)) { String[] searchPageTypes =
+       * props.getProperty(MudrodConstants.WHILE_LIST_REQUEST).split(",");
+       * boolean bContain = false; for (String searchType : searchPageTypes) {
+       * if (request.contains(searchType.trim())) { bContain = true; break; } }
+       * if (!bContain) { return null; } } else {
+       */
+      String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
+      for (String mimeType : mimeTypes) {
+        if (request.contains(mimeType)) {
           return null;
         }
-      } else {
-        String[] mimeTypes = props.getProperty(MudrodConstants.BLACK_LIST_REQUEST).split(",");
-        for (String mimeType : mimeTypes) {
-          if (request.contains(mimeType)) {
-            return null;
-          }
+      }
+    }
+
+    ApacheAccessLog accesslog = new ApacheAccessLog();
+    accesslog.LogType = type;
+    accesslog.IP = matcher.group(1);
+    accesslog.Request = matcher.group(5);
+    accesslog.Response = matcher.group(6);
+    accesslog.Bytes = Double.parseDouble(bytes);
+    accesslog.Referer = matcher.group(8);
+    accesslog.Browser = matcher.group(9);
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
+    accesslog.Time = df.format(date);
+
+    accesslog.log = log; // for test
+    
+    if (accesslog.Referer.length() >= 31 && accesslog.Referer.substring(0, 4).equals("http")) {
+      if (accesslog.Referer.charAt(4) != 's') {
+        accesslog.Referer = accesslog.Referer.replaceFirst("http", "https");
+      }
+      if (accesslog.Referer.substring(8, 15).equals("podaac-")) {
+        // https://podaac-www.jpl.nasa.gov/dataaccess
+        // https://podaac-ftp.jpl.nasa.gov/dataaccess
+        if (accesslog.Referer.substring(15, 18).equals("www")) {
+          accesslog.Referer = accesslog.Referer.replaceFirst("-www", "");
+        } else if (accesslog.Referer.substring(15, 18).equals("ftp")) {
+          accesslog.Referer = accesslog.Referer.replaceFirst("-ftp", "");
+        } else if (accesslog.Referer.substring(15, 22).equals("opendap")) {
+          // https://podaac-opendap.jpl.nasa.gov/opendap/allData/aquarius/L3/mapped/V5/7day_running/SCI/2014/contents.html
+          accesslog.Referer = accesslog.Referer.replaceFirst("podaac-", "");
         }
       }
-
-      ApacheAccessLog accesslog = new ApacheAccessLog();
-      accesslog.LogType = MudrodConstants.HTTP_LOG;
-      accesslog.IP = matcher.group(1);
-      accesslog.Request = matcher.group(5);
-      accesslog.Response = matcher.group(6);
-      accesslog.Bytes = Double.parseDouble(bytes);
-      accesslog.Referer = matcher.group(8);
-      accesslog.Browser = matcher.group(9);
-      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
-      accesslog.Time = df.format(date);
-      
-      accesslog.log = log; //for test
-
-      return accesslog;
     }
+
+    return accesslog;
   }
+
 
   public static String parseFromLogLineToJson(String log, Properties props) throws IOException, ParseException {
 
@@ -155,9 +174,9 @@ public class ApacheAccessLog extends WebLog implements Serializable {
     Matcher matcher;
     matcher = pattern.matcher(request.trim().toLowerCase());
     while (matcher.find()) {
-      
-//      request = matcher.group(1);
-//      return baseUrl + request;
+
+      // request = matcher.group(1);
+      // return baseUrl + request;
       return matcher.group(1);
     }
 
